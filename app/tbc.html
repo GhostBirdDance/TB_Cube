@@ -69,9 +69,11 @@
 
       var tbc_material = new THREE.PointsMaterial({
         size: 1,
-        vertexColors: THREE.VertexColors
+        vertexColors: THREE.VertexColors,
+        map: THREE.ImageUtils.loadTexture("img/ring.png"),
+        transparent: true
       });
-      var tbc_mesh = new THREE.PointCloud(tbc_geometry, tbc_material);
+      var tbc_mesh = new THREE.Points(tbc_geometry, tbc_material);
       tbc_mesh.scale.set(10, 10, 10);
       scene.add(tbc_mesh);
 

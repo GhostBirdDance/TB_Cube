@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      * { margin: 0; padding: 0; }
+      canvas {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="./third-party/three.js"></script>
+    <script>
+
+      var width, height;
+
+      var renderer = new THREE.WebGLRenderer({ antialias: false });
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(60);
+      camera.position.z = - 20;
+      camera.lookAt(new THREE.Vector3());
+
+      var geometry = new THREE.BoxGeometry(10, 10, 10);
+      var material = new THREE.MeshBasicMaterial({
+        color: 'red',
+        wireframe: true
+      });
+      var cube = new THREE.Mesh(geometry, material);
+      cube.rotation.velocity = new THREE.Vector3();
+      scene.add(cube);
+
+      setup();
+
+      function setup() {
+
+        document.body.appendChild(renderer.domElement);
+        window.addEventListener('resize', resize, false);
+        resize();
+
+        loop();
+
+      }
+
+      function resize() {
+
+        width = window.innerWidth;
+        height = window.innerHeight;
+
+        renderer.setSize(width, height);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+
+      }
+
+      function loop() {
+
+        requestAnimationFrame(loop);
+        renderer.render(scene, camera);
+
+        cube.rotation.add(cube.rotation.velocity);
+        cube.scale.copy(cube.rotation.velocity);
+
+        cube.scale.x = Math.abs(cube.scale.x) + 1;
+        cube.scale.y = Math.abs(cube.scale.y) + 1;
+        cube.scale.z = Math.abs(cube.scale.z) + 1;
+
+      }
+
+    </script>
+  </body>
+</html>

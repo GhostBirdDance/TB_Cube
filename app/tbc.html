@@ -14,10 +14,48 @@
   <body>
     <script src="./third-party/three.js"></script>
     <script>
-
-      var tbc = (function(){
-
-      }());
+      function up(index) {
+        var on_top = index < 9;
+        if (on_top) {
+          return index;
+        }
+        return index - 9;
+      }
+      function down(index) {
+        var on_bottom = index > 17;
+        if (on_bottom) {
+          return index;
+        }
+        return index + 9;
+      }
+      function left(index) {
+        var on_left = (index % 9) <= 2;
+        if (on_left) {
+          return index;
+        }
+        return index - 3;
+      }
+      function right(index) {
+        var on_right = (index % 9) > 5;
+        if (on_right) {
+          return index;
+        }
+        return index + 3;
+      }
+      function forward(index) {
+        var in_front = ((index - 2) % 3) === 0;
+        if (in_front) {
+          return index;
+        }
+        return index + 1;
+      }
+      function back(index) {
+        var in_back = (index % 3) === 0;
+        if (in_back) {
+          return index;
+        }
+        return index - 1;
+      }
 
       // var p = position(1);
       // createSomeGeometryAt(position(10));
@@ -61,6 +99,8 @@
           for (var z = -1; z <= 1; z += 1) {
             tbc_geometry.vertices.push(new THREE.Vector3(x * 0.5, y * 0.5, z * 0.5));
             tbc_geometry.colors.push(active_color.clone());
+
+            console.log(tbc_geometry.vertices.length - 1, x, y, z);
           }
         }
       }

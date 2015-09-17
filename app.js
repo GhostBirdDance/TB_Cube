@@ -44,7 +44,6 @@ io.sockets
       client.on('data', function(data) {
         if (data && data.toString) {
           var resp = data.toString();
-          console.log(resp);
           socket.emit('message', resp);
         }
         client.end();

@@ -13,6 +13,7 @@
   </head>
   <body>
     <script src="./third-party/three.js"></script>
+    <script src="./src/markov.js"></script>
     <script>
       function up(index) {
         var on_top = index < 9;
@@ -57,10 +58,6 @@
         return index - 1;
       }
 
-      // var p = position(1);
-      // createSomeGeometryAt(position(10));
-      // illuminate(position(1));
-
       function position(index) {
         return { position: tbc_geometry.vertices[index],
                  color: tbc_geometry.colors[index] };
@@ -99,8 +96,6 @@
           for (var z = -1; z <= 1; z += 1) {
             tbc_geometry.vertices.push(new THREE.Vector3(x * 0.5, y * 0.5, z * 0.5));
             tbc_geometry.colors.push(active_color.clone());
-
-            console.log(tbc_geometry.vertices.length - 1, x, y, z);
           }
         }
       }
@@ -118,6 +113,8 @@
       scene.add(tbc_mesh);
 
       setup();
+
+
 
       function setup() {
 

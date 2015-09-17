@@ -120,14 +120,12 @@
       tbc_mesh.scale.set(10, 10, 10);
       scene.add(tbc_mesh);
 
-      setup();
-
       function createWalker() {
         var walker = {},
             index = 0,
             updateTime = Date.now(),
             time = 0,
-            seconds_between_steps = 0.5;
+            ms_per_step = 500;
 
         function update() {
           var now = Date.now(),
@@ -135,14 +133,16 @@
           updateTime = now;
           time += dt;
 
-          if (time > seconds_between_steps) {
-            index = right(index);
+          if (time > ms_per_step) {
             activate(position(index));
             if (on_right(index)) {
               index = randomIndex();
             }
+            else {
+              index = right(index);
+            }
 
-            time -= seconds_between_steps;
+            time -= ms_per_step;
           }
         }
 
@@ -153,6 +153,7 @@
       var walker = markov.makeNode("Left To Right", createWalker());
       markov.makeNode("Top To Bottom", createWalker());
       markov.makeNode("Diagonals", createWalker());
+      setup();
 
       function setup() {
 
@@ -192,7 +193,7 @@
         });
         tbc_geometry.colorsNeedUpdate = true;
 
-        // walker.update();
+        walker.update();
       }
 
     </script>

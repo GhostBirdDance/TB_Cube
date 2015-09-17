@@ -26,7 +26,8 @@
 
       var geometry = new THREE.BoxGeometry(10, 10, 10);
       var material = new THREE.MeshBasicMaterial({
-        color: 'red'
+        color: 'red',
+        wireframe: true
       });
       var cube = new THREE.Mesh(geometry, material);
       cube.rotation.velocity = new THREE.Vector3();

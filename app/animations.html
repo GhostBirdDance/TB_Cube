@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      * { margin: 0; padding: 0; }
+      canvas {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="./third-party/three.js"></script>
+    <script src="./src/trails.js"></script>
+    <script>
+
+      var width, height;
+
+      var renderer = new THREE.WebGLRenderer({ antialias: false });
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(60);
+      camera.position.z = - 20;
+      camera.lookAt(new THREE.Vector3());
+
+      var trails = [];
+      trails.length = 3;
+      for (var i = 0; i < trails.length; i++) {
+        trails[i] = new Trails(
+          { x: 255, y: 255 * Math.random(), z: 255 * Math.random(), w: 1 },
+          { x: 255, y: 255 * Math.random(), z: 255 * Math.random(), w: 1 }
+        ).addTo(scene);
+        trails[i].mesh.scale.setLength(15 * Math.sqrt((i + 1) / trails.length));
+        trails[i].mesh.rotation.velocity = new THREE.Vector3(
+          Math.random() / 30,
+          Math.random() / 30,
+          Math.random() / 30
+        );
+        trails[i].mesh.rotation.set(
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2
+        );
+      }
+
+      setup();
+
+      function setup() {
+
+        document.body.appendChild(renderer.domElement);
+        window.addEventListener('resize', resize, false);
+        resize();
+
+        loop();
+
+      }
+
+      function resize() {
+
+        width = window.innerWidth;
+        height = window.innerHeight;
+
+        renderer.setSize(width, height);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+
+      }
+
+      function loop() {
+
+        requestAnimationFrame(loop);
+        renderer.render(scene, camera);
+
+        var now = Date.now();
+
+        for (var i = 0; i < trails.length; i++) {
+          trails[i].update(now);
+          trails[i].mesh.rotation.add(trails[i].mesh.rotation.velocity);
+        }
+
+      }
+
+    </script>
+  </body>
+</html>

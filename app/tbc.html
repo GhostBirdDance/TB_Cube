@@ -56,8 +56,8 @@
           active_color = new THREE.Color(0xFF00FF),
           color_fade_rate = 0.05;
 
-      for (var x = -1; x <= 1; x +=1) {
-        for (var y = -1; y <= 1; y +=1) {
+      for (var y = 1; y >= -1; y -=1) {
+        for (var x = -1; x <= 1; x +=1) {
           for (var z = -1; z <= 1; z += 1) {
             tbc_geometry.vertices.push(new THREE.Vector3(x * 0.5, y * 0.5, z * 0.5));
             tbc_geometry.colors.push(active_color.clone());

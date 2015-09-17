@@ -15,6 +15,19 @@
     <script src="./third-party/three.js"></script>
     <script>
 
+      var tbc = (function(){
+
+      }());
+
+      // var p = position(1);
+      // createSomeGeometryAt(position(10));
+      // illuminate(position(1));
+
+      function position(index) {
+        return { position: tbc_geometry.vertices[index],
+                 color: tbc_geometry.colors[index] };
+      };
+
       var width, height;
 
       var renderer = new THREE.WebGLRenderer({ antialias: false });
@@ -31,6 +44,27 @@
       var cube = new THREE.Mesh(geometry, material);
       cube.rotation.velocity = new THREE.Vector3();
       scene.add(cube);
+
+      var tbc_geometry = new THREE.Geometry();
+
+      for (var x = -1; x <= 1; x +=1) {
+        for (var y = -1; y <= 1; y +=1) {
+          for (var z = -1; z <= 1; z += 1) {
+            tbc_geometry.vertices.push(new THREE.Vector3(x * 0.5, y * 0.5, z * 0.5));
+            tbc_geometry.colors.push(new THREE.Color( 0xff9900 ));
+          }
+        }
+      }
+
+      position(2).color.set(0xFF00FF);
+
+      var tbc_material = new THREE.PointsMaterial({
+        size: 1,
+        vertexColors: THREE.VertexColors
+      });
+      var tbc_mesh = new THREE.PointCloud(tbc_geometry, tbc_material);
+      tbc_mesh.scale.set(10, 10, 10);
+      scene.add(tbc_mesh);
 
       setup();
 
@@ -66,6 +100,9 @@
         cube.scale.x = Math.abs(cube.scale.x) + 1;
         cube.scale.y = Math.abs(cube.scale.y) + 1;
         cube.scale.z = Math.abs(cube.scale.z) + 1;
+
+        tbc_geometry.colorsNeedUpdate = true;
+
 
       }
 

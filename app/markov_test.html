@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>CCL-5</title>
+    <link rel="stylesheet" type="text/css" href="./styles/main.css">
+  </head>
+  <body>
+    <div class="scripts">
+      <script src="./src/markov.js"></script>
+      <script>
+        /// Create some nodes and name them.
+        /// Optionally pass in an existing object to add the markov-nodeness to.
+        /// Markov properties are stored in the object's `markov` member.
+        var awesome = markov.makeNode("Awesome", {name: "Actual Name"});
+        console.assert(awesome.markov.name === "Awesome");
+        console.assert(awesome.name === "Actual Name");
+        /// Markov names are immutable.
+        awesome.markov.name = "Change-o";
+        console.assert(awesome.markov.name === "Awesome");
+
+        var good = markov.makeNode("Good");
+        var okay = markov.makeNode("Okay");
+        var decent = markov.makeNode("Decent");
+        var whatever = markov.makeNode("Whatever");
+
+        /// Add other nodes that each node can transition to.
+        awesome.addExit(awesome, 0.5);
+        awesome.addExit(good, 1.0);
+        awesome.addExit(okay, 0.5);
+
+        good.addExit(good, 0.5);
+        good.addExit(awesome, 1.0);
+        good.addExit(decent, 0.5);
+
+        decent.addExit(decent, 0.5);
+        decent.addExit(awesome, 1.0);
+        decent.addExit(whatever, 0.2);
+
+        okay.addExit(okay, 0.2);
+        okay.addExit(whatever, 1.0);
+
+        whatever.addExit(whatever, 0.5);
+        whatever.addExit(decent, 1.0);
+        whatever.addExit(okay, 0.5);
+        whatever.addExit(okay, 1.0);
+
+        var state = awesome;
+
+        for (var i = 0; i < 12; i += 1) {
+          state = state.randomExit();
+          console.log("State markov name:", state.markov.name);
+        }
+
+        /// If you don't add any exit nodes, the node will always transition to itself.
+        var noExit = markov.makeNode("Sartre");
+        for (var i = 0; i < 100; i += 1) {
+          console.assert(noExit.findExit(i / 100.0) == noExit);
+        }
+
+      </script>
+    </div>
+  </body>
+</html>

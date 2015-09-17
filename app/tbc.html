@@ -120,12 +120,15 @@
       tbc_mesh.scale.set(10, 10, 10);
       scene.add(tbc_mesh);
 
-      function createWalker() {
-        var walker = {},
+      function createWalker(opt) {
+        var opt = opt || {},
+            walker = {},
             index = 0,
             updateTime = Date.now(),
             time = 0,
-            ms_per_step = 500;
+            ms_per_step = opt.ms || 500,
+            step_fn = opt.step_fn || right,
+            reset_condition = opt.reset_condition || on_right;
 
         function update() {
           var now = Date.now(),
@@ -135,11 +138,11 @@
 
           if (time > ms_per_step) {
             activate(position(index));
-            if (on_right(index)) {
+            if (reset_condition(index)) {
               index = randomIndex();
             }
             else {
-              index = right(index);
+              index = step_fn(index);
             }
 
             time -= ms_per_step;

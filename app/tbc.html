@@ -15,9 +15,11 @@
     <script src="./third-party/three.js"></script>
     <script src="./src/markov.js"></script>
     <script>
+      function on_top(index) {
+        return index < 9;
+      }
       function up(index) {
-        var on_top = index < 9;
-        if (on_top) {
+        if (on_top(index)) {
           return index;
         }
         return index - 9;
@@ -36,9 +38,11 @@
         }
         return index - 3;
       }
+      function on_right(index) {
+        return (index % 9) > 5;
+      }
       function right(index) {
-        var on_right = (index % 9) > 5;
-        if (on_right) {
+        if (on_right(index)) {
           return index;
         }
         return index + 3;
@@ -58,6 +62,10 @@
         return index - 1;
       }
 
+      function randomIndex() {
+        return Math.floor(Math.random() * 27);
+      }
+
       function position(index) {
         return { position: tbc_geometry.vertices[index],
                  color: tbc_geometry.colors[index] };
@@ -73,7 +81,7 @@
       var renderer = new THREE.WebGLRenderer({ antialias: false });
       var scene = new THREE.Scene();
       var camera = new THREE.PerspectiveCamera(60);
-      camera.position.z = - 20;
+      camera.position.z = 20;
       camera.position.y = 2.5;
       camera.lookAt(new THREE.Vector3());
 
@@ -114,7 +122,37 @@
 
       setup();
 
+      function createWalker() {
+        var walker = {},
+            index = 0,
+            updateTime = Date.now(),
+            time = 0,
+            seconds_between_steps = 0.5;
 
+        function update() {
+          var now = Date.now(),
+              dt = now - updateTime;
+          updateTime = now;
+          time += dt;
+
+          if (time > seconds_between_steps) {
+            index = right(index);
+            activate(position(index));
+            if (on_right(index)) {
+              index = randomIndex();
+            }
+
+            time -= seconds_between_steps;
+          }
+        }
+
+        walker.update = update;
+        return walker;
+      }
+
+      var walker = markov.makeNode("Left To Right", createWalker());
+      markov.makeNode("Top To Bottom", createWalker());
+      markov.makeNode("Diagonals", createWalker());
 
       function setup() {
 
@@ -154,7 +192,7 @@
         });
         tbc_geometry.colorsNeedUpdate = true;
 
-
+        // walker.update();
       }
 
     </script>

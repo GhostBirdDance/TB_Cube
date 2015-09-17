@@ -31,9 +31,12 @@
         }
         return index + 9;
       }
+
+      function on_left(index) {
+        return (index % 9) <= 2;
+      }
       function left(index) {
-        var on_left = (index % 9) <= 2;
-        if (on_left) {
+        if (on_left(index)) {
           return index;
         }
         return index - 3;
@@ -130,6 +133,11 @@
             step_fn = opt.step_fn || right,
             reset_condition = opt.reset_condition || on_right;
 
+        function start() {
+          updateTime = Date.now();
+          time = 0;
+        }
+
         function update() {
           var now = Date.now(),
               dt = now - updateTime;
@@ -149,13 +157,21 @@
           }
         }
 
+        walker.start = start;
         walker.update = update;
         return walker;
       }
 
-      var walker = markov.makeNode("Left To Right", createWalker());
-      markov.makeNode("Top To Bottom", createWalker());
-      markov.makeNode("Diagonals", createWalker());
+      var walker_lr = markov.makeNode("Left To Right", createWalker());
+      var walker_rl = markov.makeNode("Right To Left", createWalker({ms: 250, step_fn: left, reset_condition: on_left})),
+          current_walker = walker_lr;
+
+      walker_rl.addExit(walker_rl, 1);
+      walker_rl.addExit(walker_lr, 4);
+
+      walker_lr.addExit(walker_rl, 1);
+      walker_lr.addExit(walker_lr, 1);
+
       setup();
 
       function setup() {
@@ -179,6 +195,8 @@
 
       }
 
+      var time = 0;
+
       function loop() {
 
         requestAnimationFrame(loop);
@@ -196,7 +214,13 @@
         });
         tbc_geometry.colorsNeedUpdate = true;
 
-        walker.update();
+        time += 1 / 60.0;
+        if (time > 4.0) {
+          time = 0;
+          current_walker = current_walker.randomExit();
+          current_walker.start();
+        }
+        current_walker.update();
       }
 
     </script>

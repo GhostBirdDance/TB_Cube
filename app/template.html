@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      * { margin: 0; padding: 0; }
+      canvas {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="./socket.io/socket.io.js"></script>
+    <script src="./third-party/three.js"></script>
+    <script>
+
+      var width, height;
+
+      var renderer = new THREE.WebGLRenderer({ antialias: false });
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(60);
+      camera.position.z = - 20;
+      camera.lookAt(new THREE.Vector3());
+
+      var geometry = new THREE.BoxGeometry(10, 10, 10);
+      var material = new THREE.MeshBasicMaterial({
+        color: 'red'
+      });
+      var cube = new THREE.Mesh(geometry, material);
+      cube.rotation.velocity = new THREE.Vector3();
+      scene.add(cube);
+
+      setup();
+
+      var socket = io.connect('http://localhost:8080');
+      socket
+        .on('connect', function() {
+
+          console.log('Connected to device.');
+
+        })
+        .on('message', function(resp) {
+
+          var data = JSON.parse(resp);
+          cube.rotation.velocity.set(
+            data.acceleration.x,
+            data.acceleration.y,
+            data.acceleration.z
+          );
+
+        })
+        .on('ended', function() {
+
+          console.log('Disconnected from device.');
+
+        })
+        .emit('restart');
+
+      function setup() {
+
+        document.body.appendChild(renderer.domElement);
+        window.addEventListener('resize', resize, false);
+        resize();
+
+        loop();
+
+      }
+
+      function resize() {
+
+        width = window.innerWidth;
+        height = window.innerHeight;
+
+        renderer.setSize(width, height);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+
+      }
+
+      function loop() {
+
+        requestAnimationFrame(loop);
+        renderer.render(scene, camera);
+
+        cube.rotation.add(cube.rotation.velocity);
+
+      }
+
+    </script>
+  </body>
+</html>

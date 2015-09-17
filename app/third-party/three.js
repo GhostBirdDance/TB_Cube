@@ -3474,6 +3474,13 @@ THREE.Euler.prototype = {
 
 	},
 
+	add: function(v) {
+
+		this.set( this._x + v.x, this._y + v.y, this._z + v.z );
+		return this;
+
+	},
+
 	set: function ( x, y, z, order ) {
 
 		this._x = x;

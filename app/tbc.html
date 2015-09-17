@@ -28,12 +28,18 @@
                  color: tbc_geometry.colors[index] };
       };
 
+      /// Activate a position with a decay
+      function activate(p) {
+        p.color.set(active_color);
+      }
+
       var width, height;
 
       var renderer = new THREE.WebGLRenderer({ antialias: false });
       var scene = new THREE.Scene();
       var camera = new THREE.PerspectiveCamera(60);
       camera.position.z = - 20;
+      camera.position.y = 2.5;
       camera.lookAt(new THREE.Vector3());
 
       var geometry = new THREE.BoxGeometry(10, 10, 10);
@@ -46,12 +52,15 @@
       scene.add(cube);
 
       var tbc_geometry = new THREE.Geometry();
+      var inactive_color = new THREE.Color(0x666666),
+          active_color = new THREE.Color(0xFF00FF),
+          color_fade_rate = 0.05;
 
       for (var x = -1; x <= 1; x +=1) {
         for (var y = -1; y <= 1; y +=1) {
           for (var z = -1; z <= 1; z += 1) {
             tbc_geometry.vertices.push(new THREE.Vector3(x * 0.5, y * 0.5, z * 0.5));
-            tbc_geometry.colors.push(new THREE.Color( 0xff9900 ));
+            tbc_geometry.colors.push(active_color.clone());
           }
         }
       }
@@ -101,6 +110,9 @@
         cube.scale.y = Math.abs(cube.scale.y) + 1;
         cube.scale.z = Math.abs(cube.scale.z) + 1;
 
+        tbc_geometry.colors.forEach(function (color) {
+          color.lerp(inactive_color, color_fade_rate);
+        });
         tbc_geometry.colorsNeedUpdate = true;
 
 

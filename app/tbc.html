@@ -9,9 +9,18 @@
         top: 0;
         left: 0;
       }
+
+      #title {
+        color: #FFF;
+        z-index: 1;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+      }
     </style>
   </head>
   <body>
+    <h3 id="title"></h3>
     <script src="./third-party/three.js"></script>
     <script src="./src/markov.js"></script>
     <script>
@@ -212,7 +221,8 @@
 
       }
 
-      var time = 0;
+      var time = 0,
+          seconds_per_mode = 6.0;
 
       function loop() {
 
@@ -232,11 +242,12 @@
         tbc_geometry.colorsNeedUpdate = true;
 
         time += 1 / 60.0;
-        if (time > 6.0) {
+        if (time > seconds_per_mode) {
           time = 0;
           current_walker = current_walker.randomExit();
           current_walker.start();
           console.log("Changed to:", current_walker.markov.name);
+          document.getElementById("title").textContent = current_walker.markov.name;
         }
         current_walker.update();
       }

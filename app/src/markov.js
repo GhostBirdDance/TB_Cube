@@ -4,31 +4,21 @@ var markov = (function()
   ///
   /// Creates a node in a markov chain.
   ///
-  function createNode(opt) {
-    if (typeof(opt) === "string") {
-      opt = {name: opt};
-    }
-    else {
-      opt = opt || {};
-    }
-
-    var node = {},
+  function makeNode(name, object) {
+    var node = object || {},
         exits = [],
         exit_mapping = {},
-        name = opt.name || "Unnamed";
+        name = name || "Unnamed";
 
     /// Returns
     function findExit(value) {
       var possibilities = exits.reduce(function (a, b) {
-            return (b.probability * b.state.weight) + a;
+            return (b.probability * b.state.markov.weight) + a;
           }, 0),
           value = value * possibilities,
           state;
-      if (exits.length === 0) {
-        return node;
-      }
       exits.every(function (exit) {
-        value -= exit.probability * exit.state.weight;
+        value -= exit.probability * exit.state.markov.weight;
         if (value <= 0.0) {
           state = exit.state;
           return false;
@@ -40,33 +30,36 @@ var markov = (function()
     }
 
     function addExit(state, probability) {
-      if (exit_mapping.hasOwnProperty(state.name)) {
-        exit_mapping[state.name].probability = probability;
+      if (exit_mapping.hasOwnProperty(state.markov.name)) {
+        exit_mapping[state.markov.name].probability = probability;
       }
       else {
         var pair = {state: state, probability: probability};
         exits.push(pair);
-        exit_mapping[state.name] = pair;
+        exit_mapping[state.markov.name] = pair;
       }
     }
 
-    function stateProbability(state) {
-      if (! exit_mapping.hasOwnProperty(state.name)) {
+    function findExitProbability(state) {
+      if (! exit_mapping.hasOwnProperty(state.markov.name)) {
         return 0;
       }
-      return exit_mapping[state.name].probability * state.weight;
+      return exit_mapping[state.markov.name].probability * state.markov.weight;
     }
 
-    node.weight = opt.weight || 1.0;
+    var markov_properties = { weight: 1.0 };
+    Object.defineProperty(markov_properties, "name", {value: name, writable: false});
+    node.markov = markov_properties;
     node.findExit = findExit;
     node.randomExit = function () { return findExit(Math.random()); }
     node.addExit = addExit;
-    node.name = name;
-    node.stateProbability = stateProbability;
+    node.findExitProbability = findExitProbability;
+
+    addExit(node, 0);
 
     return node;
   }
 
-  obj.createNode = createNode;
+  obj.makeNode = makeNode;
   return obj;
 }());

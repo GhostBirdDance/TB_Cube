@@ -24,9 +24,12 @@
         }
         return index - 9;
       }
+
+      function on_bottom(index) {
+        return index > 17;
+      }
       function down(index) {
-        var on_bottom = index > 17;
-        if (on_bottom) {
+        if (on_bottom(index)) {
           return index;
         }
         return index + 9;
@@ -164,13 +167,27 @@
 
       var walker_lr = markov.makeNode("Left To Right", createWalker());
       var walker_rl = markov.makeNode("Right To Left", createWalker({ms: 250, step_fn: left, reset_condition: on_left})),
+          walker_bt = markov.makeNode("Bottom To Top", createWalker({ms: 300, step_fn: up, reset_condition: on_top})),
+          walker_tb = markov.makeNode("Top to Bottom", createWalker({ms: 600, step_fn: down, reset_condition: on_bottom})),
           current_walker = walker_lr;
 
       walker_rl.addExit(walker_rl, 1);
       walker_rl.addExit(walker_lr, 4);
+      walker_rl.addExit(walker_bt, 2);
+      walker_rl.addExit(walker_tb, 2);
 
       walker_lr.addExit(walker_rl, 1);
       walker_lr.addExit(walker_lr, 1);
+      walker_lr.addExit(walker_bt, 1);
+      walker_lr.addExit(walker_tb, 1);
+
+      walker_tb.addExit(walker_tb, 0.5);
+      walker_tb.addExit(walker_bt, 2);
+
+      walker_bt.addExit(walker_bt, 1);
+      walker_bt.addExit(walker_tb, 1);
+      walker_bt.addExit(walker_lr, 1);
+      walker_bt.addExit(walker_rl, 1);
 
       setup();
 
@@ -215,10 +232,11 @@
         tbc_geometry.colorsNeedUpdate = true;
 
         time += 1 / 60.0;
-        if (time > 4.0) {
+        if (time > 6.0) {
           time = 0;
           current_walker = current_walker.randomExit();
           current_walker.start();
+          console.log("Changed to:", current_walker.markov.name);
         }
         current_walker.update();
       }

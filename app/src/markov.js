@@ -12,6 +12,7 @@ function createNode(opt) {
 
   var node = {},
       exits = [],
+      exit_mapping = {},
       name = opt.name || "Unnamed";
 
   function nextState() {
@@ -36,13 +37,29 @@ function createNode(opt) {
   }
 
   function addExit(state, probability) {
-    exits.push({state: state, probability: probability});
+    if (exit_mapping.hasOwnProperty(state.name)) {
+      exit_mapping[state.name].probability = probability;
+      console.log("reusing exit ", state.name);
+    }
+    else {
+      var pair = {state: state, probability: probability};
+      exits.push(pair);
+      exit_mapping[state.name] = pair;
+    }
+  }
+
+  function stateProbability(state) {
+    if (! exit_mapping.hasOwnProperty(state.name)) {
+      return 0;
+    }
+    return exit_mapping[state.name].probability * state.weight;
   }
 
   node.weight = opt.weight || 1.0;
   node.nextState = nextState;
   node.addExit = addExit;
   node.name = name;
+  node.stateProbability = stateProbability;
 
   return node;
 }
@@ -71,6 +88,7 @@ okay.addExit(whatever, 1.0);
 whatever.addExit(whatever, 0.5);
 whatever.addExit(decent, 1.0);
 whatever.addExit(okay, 0.5);
+whatever.addExit(okay, 1.0);
 
 var state = awesome;
 
@@ -78,5 +96,3 @@ for (var i = 0; i < 50; i += 1) {
   state = state.nextState();
   console.log("State: " + state.name);
 }
-
-

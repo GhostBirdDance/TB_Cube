@@ -1,0 +1,45 @@
+@import "bourbon/bourbon";
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.graph {
+
+  font: 500 11px / 13px "Lucida Sans", arial, sans-serif;
+
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 202px;
+  height: 102px;
+
+  canvas, svg {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  ul {
+
+    position: absolute;
+    // top: 0;
+    // left: 0;
+    right: 0;
+    bottom: 0;
+
+    li {
+      @include inline-block;
+      position: relative;
+      list-style: none;
+      margin: 5px;
+    }
+  }
+
+  &.hidden {
+    display: none;
+  }
+
+}

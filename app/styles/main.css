@@ -1,0 +1,29 @@
+* {
+  margin: 0;
+  padding: 0; }
+
+.graph {
+  font: 500 11px / 13px "Lucida Sans", arial, sans-serif;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 202px;
+  height: 102px; }
+  .graph canvas, .graph svg {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0; }
+  .graph ul {
+    position: absolute;
+    right: 0;
+    bottom: 0; }
+    .graph ul li {
+      display: inline-block;
+      position: relative;
+      list-style: none;
+      margin: 5px; }
+  .graph.hidden {
+    display: none; }
+
+/*# sourceMappingURL=main.css.map */

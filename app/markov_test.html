@@ -10,12 +10,19 @@
       <script src="./src/markov.js"></script>
       <script>
         /// Create some nodes and name them.
-        var awesome = markov.createNode("Awesome");
-        var good = markov.createNode("Good");
-        var okay = markov.createNode("Okay");
-        var decent = markov.createNode("Decent");
-        var whatever = markov.createNode("Whatever");
+        /// Optionally pass in an existing object to add the markov-nodeness to.
+        /// Markov properties are stored in the object's `markov` member.
+        var awesome = markov.makeNode("Awesome", {name: "Actual Name"});
+        console.assert(awesome.markov.name === "Awesome");
+        console.assert(awesome.name === "Actual Name");
+        /// Markov names are immutable.
+        awesome.markov.name = "Change-o";
+        console.assert(awesome.markov.name === "Awesome");
 
+        var good = markov.makeNode("Good");
+        var okay = markov.makeNode("Okay");
+        var decent = markov.makeNode("Decent");
+        var whatever = markov.makeNode("Whatever");
 
         /// Add other nodes that each node can transition to.
         awesome.addExit(awesome, 0.5);
@@ -40,13 +47,13 @@
 
         var state = awesome;
 
-        for (var i = 0; i < 50; i += 1) {
+        for (var i = 0; i < 12; i += 1) {
           state = state.randomExit();
-          console.log("State: " + state.name);
+          console.log("State markov name:", state.markov.name);
         }
 
         /// If you don't add any exit nodes, the node will always transition to itself.
-        var noExit = markov.createNode("Sartre");
+        var noExit = markov.makeNode("Sartre");
         for (var i = 0; i < 100; i += 1) {
           console.assert(noExit.findExit(i / 100.0) == noExit);
         }

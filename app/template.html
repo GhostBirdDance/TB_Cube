@@ -45,9 +45,9 @@
 
           var data = JSON.parse(resp);
           cube.rotation.velocity.set(
-            data.acceleration.x,
-            data.acceleration.y,
-            data.acceleration.z
+            data.acceleration.x * 0.1,
+            data.acceleration.y * 0.1,
+            data.acceleration.z * 0.1
           );
 
         })
@@ -85,6 +85,11 @@
         renderer.render(scene, camera);
 
         cube.rotation.add(cube.rotation.velocity);
+        cube.scale.copy(cube.rotation.velocity);
+
+        cube.scale.x = Math.abs(cube.scale.x) + 1;
+        cube.scale.y = Math.abs(cube.scale.y) + 1;
+        cube.scale.z = Math.abs(cube.scale.z) + 1;
 
       }
 

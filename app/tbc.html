@@ -124,7 +124,7 @@
       function constrainToCube(arr, dims) {
         var dims = (dims - 1) || 2;
         arr.forEach(function (value, index) {
-          arr[index] = Math.min(value, dims);
+          arr[index] = Math.max(Math.min(value, dims), 0);
         });
       }
 
@@ -194,6 +194,7 @@
         function start() {
           updateTime = Date.now();
           time = 0;
+          reset_fn(position);
         }
 
         function update(color) {
@@ -220,7 +221,26 @@
         return walker;
       }
 
-      var other_walker = markov.makeNode("Random", createWalker({ms: 800}));
+      var other_walker = markov.makeNode("Diagonal", createWalker({ms: 800,
+        step_fn: function (pos) {
+          pos[0] -= 1;
+          pos[1] -= 1;
+          constrainToCube(pos);
+          console.log(pos);
+        },
+        reset_condition: function (pos) {
+          return pos[0] <= 0 && pos[1] <= 1;
+        },
+        reset_fn: function (pos) {
+          randomizePosition(pos);
+          if (Math.random() < 0.5) {
+            pos[0] = 2;
+          }
+          else {
+            pos[1] = 2;
+          }
+        }
+      }));
       var current_walker = markov.makeNode("Right To Left", createWalker({ms: 650, step_fn: function (pos) {
         pos[0] -= 1;
         constrainToCube(pos);

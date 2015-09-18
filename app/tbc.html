@@ -77,7 +77,7 @@
         return index - 1;
       }
 
-      function randomIndex() {
+      function randomCubeIndex() {
         return Math.floor(Math.random() * 27);
       }
 
@@ -88,7 +88,7 @@
       };
 
       /// Convert a grid position into a cube index.
-      function index(x, y, z) {
+      function cubeIndex(x, y, z) {
         if (Array.isArray(x)) {
           y = x[1];
           z = x[2];
@@ -107,6 +107,25 @@
                 Math.floor(Math.random() * size),
                 Math.floor(Math.random() * size)
         ];
+      }
+
+      function randomIndex(size) {
+        var size = size || 3;
+        return Math.floor(Math.random() * size);
+      }
+
+      function randomizePosition(position, size) {
+        var size = size || 3;
+        position.forEach(function (value, index) {
+          position[index] = Math.floor(Math.random() * size);
+        })
+      }
+
+      function constrainToCube(arr, dims) {
+        var dims = (dims - 1) || 2;
+        arr.forEach(function (value, index) {
+          arr[index] = Math.min(value, dims);
+        });
       }
 
       /// Activate a position with a decay
@@ -159,18 +178,18 @@
       scene.add(tbc_mesh);
 
       function never() { return false; }
-      function passthrough(value) { return value; }
+      function nothing() {}
 
       function createWalker(opt) {
         var opt = opt || {},
             walker = {},
-            index = 0,
+            position = [0, 0, 0],
             updateTime = Date.now(),
             time = 0,
             ms_per_step = opt.ms || 500,
             step_fn = opt.step_fn || randomIndex,
             reset_condition = opt.reset_condition || never,
-            reset_fn = opt.reset_fn || passthrough;
+            reset_fn = opt.reset_fn || nothing;
 
         function start() {
           updateTime = Date.now();
@@ -184,12 +203,12 @@
           time += dt;
 
           if (time > ms_per_step) {
-            activate(cubeVertex(index), color);
-            if (reset_condition(index)) {
-              index = reset_fn(index);
+            activate(cubeVertex(cubeIndex(position)), color);
+            if (reset_condition(position)) {
+              reset_fn(position);
             }
             else {
-              index = step_fn(index);
+              step_fn(position);
             }
 
             time -= ms_per_step;
@@ -201,30 +220,17 @@
         return walker;
       }
 
-      var walker_lr = markov.makeNode("Random", createWalker({ms: 800}));
-      var walker_rl = markov.makeNode("Right To Left", createWalker({ms: 650, step_fn: left, reset_condition: on_left})),
-          walker_bt = markov.makeNode("Bottom To Top", createWalker({ms: 900, step_fn: up, reset_condition: on_top})),
-          walker_tb = markov.makeNode("Top to Bottom", createWalker({ms: 1200, step_fn: down, reset_condition: on_bottom})),
-          current_walker = walker_lr,
-	  other_walker = walker_bt;
-
-      walker_rl.addExit(walker_rl, 1);
-      walker_rl.addExit(walker_lr, 4);
-      walker_rl.addExit(walker_bt, 2);
-      walker_rl.addExit(walker_tb, 2);
-
-      walker_lr.addExit(walker_rl, 2);
-      walker_lr.addExit(walker_lr, 2);
-      walker_lr.addExit(walker_bt, 1);
-      walker_lr.addExit(walker_tb, 1);
-
-      walker_tb.addExit(walker_tb, 1);
-      walker_tb.addExit(walker_bt, 2);
-
-      walker_bt.addExit(walker_bt, 2);
-      walker_bt.addExit(walker_tb, 2);
-      walker_bt.addExit(walker_lr, 1);
-      walker_bt.addExit(walker_rl, 1);
+      var other_walker = markov.makeNode("Random", createWalker({ms: 800}));
+      var current_walker = markov.makeNode("Right To Left", createWalker({ms: 650, step_fn: function (pos) {
+        pos[0] -= 1;
+        constrainToCube(pos);
+      }, reset_condition: function (pos) {
+        return pos[0] <= 0;
+      }, reset_fn: function (pos) {
+        randomizePosition(pos);
+        pos[0] = 2;
+      }
+      }));
 
       setup();
 

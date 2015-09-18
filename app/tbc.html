@@ -81,7 +81,8 @@
         return Math.floor(Math.random() * 27);
       }
 
-      function position(index) {
+      /// Returns cube vertex data at index.
+      function cubeVertex(index) {
         return { position: tbc_geometry.vertices[index],
                  color: tbc_geometry.colors[index] };
       };
@@ -147,8 +148,6 @@
         }
       }
 
-      position(2).color.set(0xFF00FF);
-
       var tbc_material = new THREE.PointsMaterial({
         size: 4,
         vertexColors: THREE.VertexColors,
@@ -181,7 +180,7 @@
           time += dt;
 
           if (time > ms_per_step) {
-            activate(position(index), color);
+            activate(cubeVertex(index), color);
             if (reset_condition(index)) {
               index = randomIndex();
             }

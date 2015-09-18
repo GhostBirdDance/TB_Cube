@@ -86,11 +86,26 @@
                  color: tbc_geometry.colors[index] };
       };
 
+      /// Convert a grid position into a cube index.
       function index(x, y, z) {
+        if (Array.isArray(x)) {
+          y = x[1];
+          z = x[2];
+          x = x[0];
+        }
         var level = Math.min(y, 2) * 9;
         var left = Math.min(x, 2) * 3;
         var depth = Math.min(z, 2);
         return level + left + depth;
+      }
+
+      /// Returns a random position in a cube.
+      function randomPosition(size) {
+        var size = size || 3;
+        return [Math.floor(Math.random() * size),
+                Math.floor(Math.random() * size),
+                Math.floor(Math.random() * size)
+        ];
       }
 
       /// Activate a position with a decay

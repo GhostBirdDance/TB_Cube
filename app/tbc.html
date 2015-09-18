@@ -185,16 +185,16 @@
       walker_rl.addExit(walker_bt, 2);
       walker_rl.addExit(walker_tb, 2);
 
-      walker_lr.addExit(walker_rl, 1);
-      walker_lr.addExit(walker_lr, 1);
+      walker_lr.addExit(walker_rl, 2);
+      walker_lr.addExit(walker_lr, 2);
       walker_lr.addExit(walker_bt, 1);
       walker_lr.addExit(walker_tb, 1);
 
-      walker_tb.addExit(walker_tb, 0.5);
+      walker_tb.addExit(walker_tb, 1);
       walker_tb.addExit(walker_bt, 2);
 
-      walker_bt.addExit(walker_bt, 1);
-      walker_bt.addExit(walker_tb, 1);
+      walker_bt.addExit(walker_bt, 2);
+      walker_bt.addExit(walker_tb, 2);
       walker_bt.addExit(walker_lr, 1);
       walker_bt.addExit(walker_rl, 1);
 

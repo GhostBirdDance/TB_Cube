@@ -48,7 +48,9 @@
 
   _.extend(Responder, {
 
-    Resolution: 12
+    Resolution: 12,
+
+    TimeDivisor: 5000
 
   });
 
@@ -67,18 +69,20 @@
 
       var total = 0;
       for (var v in volumes) {
-        total += volumes[v];
+        total += volumes[v].volume;
       }
 
-      var xpct = volumes.x / total;
-      var ypct = volumes.y / total;
-      var zpct = volumes.z / total;
+      var xpct = volumes.x.volume / total;
+      var ypct = volumes.y.volume / total;
+      var zpct = volumes.z.volume / total;
+
+      var tp = volumes.x.peak + volumes.y.peak + volumes.z.peak;
 
       var two = this.two;
 
-      var points = _.map(_.range(Responder.Resolution), function(i) {
-        var x = xpct * 2 * (Math.random() - 0.5) * two.width;
-        var y = zpct * 2 * (Math.random() - 0.5) * two.height / 3;
+      var points = _.map(_.range(Math.floor(Responder.Resolution * duration / Responder.TimeDivisor)), function(i) {
+        var x = xpct * 2 * (Math.random() - 0.5) * (two.width / 8 + two.width * total / 5000);
+        var y = zpct * 2 * (Math.random() - 0.5) * (two.height / 8 + two.height * total / 5000);
         return new Two.Anchor(x, y);
       });
 
@@ -87,9 +91,11 @@
       var path = new Two.Path(points);
       path.translation.set(two.width / 2, two.height / 2);
       path.noFill().stroke = 'white';
-      path.linewidth = 20;
-      path.cap = 'round';
-      path.curved = true;
+      path.linewidth = (two.width / 8) * total / 5000;
+      path.cap = tp < 100 ? 'round' : 'butt';
+      path.join = tp < 100 ? 'round' : 'miter';
+      path.curved = tp < 100;
+      // path.miter = tp < 100 ? 4 : 12;
       path.tweens = {
         i: new TWEEN.Tween(path),
         o: new TWEEN.Tween(path)

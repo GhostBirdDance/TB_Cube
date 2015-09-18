@@ -59,6 +59,7 @@
       shape.opacity = 0.66;
       shape.listening = true;
       shape.volume = 0;
+      shape.peak = 0;
 
       shape.li = document.createElement('li');
       this.ul.appendChild(shape.li);
@@ -76,6 +77,7 @@
       var vr = Math.round(value);
       var vra = Math.abs(vr);
       shape.volume += vra;
+      shape.peak = Math.max(shape.peak, vra);
 
       for (var i = shape.vertices.length - 1; i >= 0; i--) {
 
@@ -130,10 +132,19 @@
         } else {
           var volumes = {};
           var duration = Date.now() - this.startTime;
+          var total = 0;
           for (var c in this.channels) {
-            volumes[c] = this.channels[c].volume;
+            volumes[c] = {
+              volume: this.channels[c].volume,
+              peak: this.channels[c].peak
+            };
+            total += volumes[c].volume;
           }
-          this.trigger('responding', volumes, duration);
+          if (total > 0) {
+            this.trigger('responding', volumes, duration);
+          } else {
+            this.listen();
+          }
         }
       }
 
@@ -159,6 +170,7 @@
         var channel = this.channels[c];
         channel.listening = true;
         channel.volume = 0;
+        channel.peak = 0;
       }
 
       return this;

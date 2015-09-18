@@ -158,6 +158,9 @@
       tbc_mesh.scale.set(10, 10, 10);
       scene.add(tbc_mesh);
 
+      function never() { return false; }
+      function nothing() {}
+
       function createWalker(opt) {
         var opt = opt || {},
             walker = {},
@@ -165,8 +168,9 @@
             updateTime = Date.now(),
             time = 0,
             ms_per_step = opt.ms || 500,
-            step_fn = opt.step_fn || right,
-            reset_condition = opt.reset_condition || on_right;
+            step_fn = opt.step_fn || randomIndex,
+            reset_condition = opt.reset_condition || never,
+            reset_fn = opt.reset_fn || nothing;
 
         function start() {
           updateTime = Date.now();
@@ -197,7 +201,7 @@
         return walker;
       }
 
-      var walker_lr = markov.makeNode("Left To Right", createWalker({ms: 800}));
+      var walker_lr = markov.makeNode("Random", createWalker({ms: 800}));
       var walker_rl = markov.makeNode("Right To Left", createWalker({ms: 650, step_fn: left, reset_condition: on_left})),
           walker_bt = markov.makeNode("Bottom To Top", createWalker({ms: 900, step_fn: up, reset_condition: on_top})),
           walker_tb = markov.makeNode("Top to Bottom", createWalker({ms: 1200, step_fn: down, reset_condition: on_bottom})),

@@ -86,9 +86,16 @@
                  color: tbc_geometry.colors[index] };
       };
 
+      function index(x, y, z) {
+        var level = Math.min(y, 2) * 9;
+        var left = Math.min(x, 2) * 3;
+        var depth = Math.min(z, 2);
+        return level + left + depth;
+      }
+
       /// Activate a position with a decay
       function activate(p, color) {
-	var color = color || active_color;
+      	var color = color || active_color;
         p.color.set(color);
       }
 

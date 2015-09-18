@@ -25,15 +25,28 @@
 
     this.channels = {};
 
+    this.bind('listen', _.bind(function() {
+      for (var c in this.channels) {
+        var channel = this.channels[c];
+        channel.listening = true;
+      }
+    }, this));
+
   };
 
   _.extend(Graph, {
 
-    Length: 30
+    Length: 30,
+
+    Scalar: 10
 
   });
 
-  _.extend(Graph.prototype, {
+  _.extend(Graph.prototype, Backbone.Events, {
+
+    lag: 2000,
+
+    listening: true,
 
     appendTo: function(domElement) {
       domElement.appendChild(this.domElement);
@@ -50,6 +63,7 @@
       shape.noFill().stroke = color;
       shape.linewidth = 2;
       shape.opacity = 0.66;
+      shape.listening = true;
 
       shape.li = document.createElement('li');
       this.ul.appendChild(shape.li);
@@ -70,9 +84,50 @@
         var v = shape.vertices[i];
         var p = shape.vertices[i - 1];
 
-        v.y = !p ? value : p.y;
-        shape.li.textContent = prop + ': ' + Math.round(v.y);
+        if (!p) {
 
+          v.y = Math.abs(Math.round(value));
+          shape.li.textContent = prop + ': ' + v.y;
+
+          if (v.y === 0 && shape.listening) {
+            if (!shape.startTime) {
+              shape.startTime = Date.now();
+            } else if (Date.now() - shape.startTime > this.lag) {
+              shape.startTime = 0;
+              shape.listening = false;
+            }
+          } else if (v.y !== 0 && shape.listening) {
+            shape.startTime = Date.now();
+          }
+
+          continue;
+
+        }
+
+        v.y = p.y;
+
+      }
+
+      return this;
+
+    },
+
+    update: function(obj) {
+
+      var isListening = false;
+
+      for (var k in obj) {
+        var v = obj[k];
+        v *= Graph.Scalar;
+        this.updateChannel(k, v);
+        if (this.channels[k].listening) {
+          isListening = true;
+        }
+      }
+
+      if (isListening !== this.listening) {
+        this.listening = isListening;
+        this.trigger(this.listening ? 'listening' : 'responding');
       }
 
       return this;

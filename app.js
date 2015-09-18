@@ -42,8 +42,8 @@ io.sockets
         socket.emit('connected');
       });
       client.on('data', function(data) {
-        if (data && data.toString) {
-          var resp = data.toString();
+        var resp = data.toString();
+        if (/acceleration/ig.test(resp)) {
           socket.emit('message', resp);
         }
         client.end();

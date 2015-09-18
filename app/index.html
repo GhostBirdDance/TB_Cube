@@ -31,7 +31,18 @@
         graph
           .addChannel('x', 'blue')
           .addChannel('y', 'green')
-          .addChannel('z', 'red');
+          .addChannel('z', 'red')
+          .bind('listening', function() {
+            document.body.style.background = 'blue';
+            console.log('listening');
+          })
+          .bind('responding', function() {
+            document.body.style.background = 'red';
+            console.log('responding');
+            // setTimeout(function() {
+            //   graph.trigger('listen');
+            // }, graph.lag);
+          });
 
         var socket = io.connect('http://localhost:8080');
         socket
@@ -43,16 +54,7 @@
           .on('message', function(resp) {
 
             var data = JSON.parse(resp);
-
-            for (var k in data.acceleration) {
-              var v = data.acceleration[k];
-              v *= 10;
-              // v = Math.pow(v, 3);
-              // v = Math.pow(v, 7);
-              graph.updateChannel(k, v);
-            }
-
-            // graph.two.update();
+            graph.update(data.acceleration);
 
           })
           .on('ended', function() {

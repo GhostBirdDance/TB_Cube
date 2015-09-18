@@ -13,8 +13,7 @@
     this.two = new Two({
       type: Two.Types.canvas,
       width: 200,
-      height: 100,
-      autostart: true
+      height: 100
     }).appendTo(this.domElement);
 
     this.domElement.appendChild(this.ul);
@@ -24,13 +23,6 @@
     });
 
     this.channels = {};
-
-    this.bind('listen', _.bind(function() {
-      for (var c in this.channels) {
-        var channel = this.channels[c];
-        channel.listening = true;
-      }
-    }, this));
 
   };
 
@@ -44,9 +36,11 @@
 
   _.extend(Graph.prototype, Backbone.Events, {
 
-    lag: 2000,
+    lag: 1000,
 
     listening: true,
+
+    startTime: Date.now(),
 
     appendTo: function(domElement) {
       domElement.appendChild(this.domElement);
@@ -64,6 +58,7 @@
       shape.linewidth = 2;
       shape.opacity = 0.66;
       shape.listening = true;
+      shape.volume = 0;
 
       shape.li = document.createElement('li');
       this.ul.appendChild(shape.li);
@@ -78,6 +73,9 @@
     updateChannel: function(prop, value) {
 
       var shape = this.channels[prop];
+      var vr = Math.round(value);
+      var vra = Math.abs(vr);
+      shape.volume += vra;
 
       for (var i = shape.vertices.length - 1; i >= 0; i--) {
 
@@ -86,8 +84,8 @@
 
         if (!p) {
 
-          v.y = Math.abs(Math.round(value));
-          shape.li.textContent = prop + ': ' + v.y;
+          v.y = vr;
+          shape.li.textContent = prop + ': ' + vra;
 
           if (v.y === 0 && shape.listening) {
             if (!shape.startTime) {
@@ -127,7 +125,16 @@
 
       if (isListening !== this.listening) {
         this.listening = isListening;
-        this.trigger(this.listening ? 'listening' : 'responding');
+        if (this.listening) {
+          this.trigger('listening');
+        } else {
+          var volumes = {};
+          var duration = Date.now() - this.startTime;
+          for (var c in this.channels) {
+            volumes[c] = this.channels[c].volume;
+          }
+          this.trigger('responding', volumes, duration);
+        }
       }
 
       return this;
@@ -142,6 +149,20 @@
     pause: function() {
       this.two.pause();
       return this;
+    },
+
+    listen: function() {
+
+      this.startTime = Date.now();
+
+      for (var c in this.channels) {
+        var channel = this.channels[c];
+        channel.listening = true;
+        channel.volume = 0;
+      }
+
+      return this;
+
     }
 
   });

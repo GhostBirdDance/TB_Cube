@@ -3716,6 +3716,10 @@ var Backbone = Backbone || {};
 
     ignore: function() {
 
+      if (!_.isObject(this.controls)) {
+        return this;
+      }
+
       this.controls.left.unbind(Two.Events.change, this._broadcast);
       this.controls.right.unbind(Two.Events.change, this._broadcast);
 
@@ -4261,6 +4265,7 @@ var Backbone = Backbone || {};
         ret = '';
 
       for (var i = 0; i < l; i++) {
+
         var b = points[i];
         var command;
         var prev = closed ? mod(i - 1, l) : Math.max(i - 1, 0);
@@ -4275,8 +4280,9 @@ var Backbone = Backbone || {};
         // bypassing the getter
         var x = toFixed(b._x);
         var y = toFixed(b._y);
+        var bc = i === 0 ? Two.Commands.move : b._command;
 
-        switch (b._command) {
+        switch (bc) {
 
           case Two.Commands.close:
             command = Two.Commands.close;

@@ -8,24 +8,20 @@
   <body>
     <div class="scripts">
       <script src="./socket.io/socket.io.js"></script>
+      <script src="./third-party/tween.js"></script>
       <script src="./third-party/two.js"></script>
       <script src="./src/graph.js"></script>
+      <script src="./src/responder.js"></script>
       <script>
 
-        var two = new Two({
-          fullscreen: true,
-          autostart: true
-        }).appendTo(document.body);
+        var responder = new Responder()
+          .appendTo(document.body);
 
         var graph = new Graph()
           .appendTo(document.body);
 
-        var temp = new Two.Vector();
-
-        var velocity = {
-          x: 0,
-          y: 0,
-          z: 0
+        var listen = function() {
+          graph.listen();
         };
 
         graph
@@ -33,16 +29,13 @@
           .addChannel('y', 'green')
           .addChannel('z', 'red')
           .bind('listening', function() {
-            document.body.style.background = 'blue';
             console.log('listening');
           })
-          .bind('responding', function() {
-            document.body.style.background = 'red';
-            console.log('responding');
-            // setTimeout(function() {
-            //   graph.trigger('listen');
-            // }, graph.lag);
-          });
+          .bind('responding', function(volumes, duration) {
+            console.log('responding', arguments);
+            responder.respond(volumes, duration, listen);
+          })
+          .start();
 
         var socket = io.connect('http://localhost:8080');
         socket

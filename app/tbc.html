@@ -1,0 +1,263 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      * { margin: 0; padding: 0; }
+      canvas {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      #title {
+        color: #FFF;
+        z-index: 1;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h3 id="title"></h3>
+    <script src="./third-party/three.js"></script>
+    <script src="./src/markov.js"></script>
+    <script>
+      function on_top(index) {
+        return index < 9;
+      }
+      function up(index) {
+        if (on_top(index)) {
+          return index;
+        }
+        return index - 9;
+      }
+
+      function on_bottom(index) {
+        return index > 17;
+      }
+      function down(index) {
+        if (on_bottom(index)) {
+          return index;
+        }
+        return index + 9;
+      }
+
+      function on_left(index) {
+        return (index % 9) <= 2;
+      }
+      function left(index) {
+        if (on_left(index)) {
+          return index;
+        }
+        return index - 3;
+      }
+      function on_right(index) {
+        return (index % 9) > 5;
+      }
+      function right(index) {
+        if (on_right(index)) {
+          return index;
+        }
+        return index + 3;
+      }
+      function forward(index) {
+        var in_front = ((index - 2) % 3) === 0;
+        if (in_front) {
+          return index;
+        }
+        return index + 1;
+      }
+      function back(index) {
+        var in_back = (index % 3) === 0;
+        if (in_back) {
+          return index;
+        }
+        return index - 1;
+      }
+
+      function randomIndex() {
+        return Math.floor(Math.random() * 27);
+      }
+
+      function position(index) {
+        return { position: tbc_geometry.vertices[index],
+                 color: tbc_geometry.colors[index] };
+      };
+
+      /// Activate a position with a decay
+      function activate(p, color) {
+	var color = color || active_color;
+        p.color.set(color);
+      }
+
+      var width, height;
+
+      var renderer = new THREE.WebGLRenderer({ antialias: false });
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(60);
+      camera.position.z = 20;
+      camera.position.y = 2.5;
+      camera.lookAt(new THREE.Vector3());
+
+      var geometry = new THREE.BoxGeometry(10, 10, 10);
+      var material = new THREE.MeshBasicMaterial({
+        color: 'red',
+        wireframe: true
+      });
+      var cube = new THREE.Mesh(geometry, material);
+      cube.rotation.velocity = new THREE.Vector3();
+      // scene.add(cube);
+
+      var tbc_geometry = new THREE.Geometry();
+      var inactive_color = new THREE.Color(0x333333),
+          active_color = new THREE.Color(0xFF00FF),
+		alt_color = new THREE.Color(0x0099ff),
+          color_fade_rate = 0.05;
+
+      for (var y = 1; y >= -1; y -=1) {
+        for (var x = -1; x <= 1; x +=1) {
+          for (var z = -1; z <= 1; z += 1) {
+            tbc_geometry.vertices.push(new THREE.Vector3(x * 0.5, y * 0.5, z * 0.5));
+            tbc_geometry.colors.push(active_color.clone());
+          }
+        }
+      }
+
+      position(2).color.set(0xFF00FF);
+
+      var tbc_material = new THREE.PointsMaterial({
+        size: 4,
+        vertexColors: THREE.VertexColors,
+        map: THREE.ImageUtils.loadTexture("img/ring.png"),
+        transparent: true
+      });
+      var tbc_mesh = new THREE.Points(tbc_geometry, tbc_material);
+      tbc_mesh.scale.set(10, 10, 10);
+      scene.add(tbc_mesh);
+
+      function createWalker(opt) {
+        var opt = opt || {},
+            walker = {},
+            index = 0,
+            updateTime = Date.now(),
+            time = 0,
+            ms_per_step = opt.ms || 500,
+            step_fn = opt.step_fn || right,
+            reset_condition = opt.reset_condition || on_right;
+
+        function start() {
+          updateTime = Date.now();
+          time = 0;
+        }
+
+        function update(color) {
+          var now = Date.now(),
+              dt = now - updateTime;
+          updateTime = now;
+          time += dt;
+
+          if (time > ms_per_step) {
+            activate(position(index), color);
+            if (reset_condition(index)) {
+              index = randomIndex();
+            }
+            else {
+              index = step_fn(index);
+            }
+
+            time -= ms_per_step;
+          }
+        }
+
+        walker.start = start;
+        walker.update = update;
+        return walker;
+      }
+
+      var walker_lr = markov.makeNode("Left To Right", createWalker({ms: 800}));
+      var walker_rl = markov.makeNode("Right To Left", createWalker({ms: 650, step_fn: left, reset_condition: on_left})),
+          walker_bt = markov.makeNode("Bottom To Top", createWalker({ms: 900, step_fn: up, reset_condition: on_top})),
+          walker_tb = markov.makeNode("Top to Bottom", createWalker({ms: 1200, step_fn: down, reset_condition: on_bottom})),
+          current_walker = walker_lr,
+	  other_walker = walker_bt;
+
+      walker_rl.addExit(walker_rl, 1);
+      walker_rl.addExit(walker_lr, 4);
+      walker_rl.addExit(walker_bt, 2);
+      walker_rl.addExit(walker_tb, 2);
+
+      walker_lr.addExit(walker_rl, 2);
+      walker_lr.addExit(walker_lr, 2);
+      walker_lr.addExit(walker_bt, 1);
+      walker_lr.addExit(walker_tb, 1);
+
+      walker_tb.addExit(walker_tb, 1);
+      walker_tb.addExit(walker_bt, 2);
+
+      walker_bt.addExit(walker_bt, 2);
+      walker_bt.addExit(walker_tb, 2);
+      walker_bt.addExit(walker_lr, 1);
+      walker_bt.addExit(walker_rl, 1);
+
+      setup();
+
+      function setup() {
+
+        document.body.appendChild(renderer.domElement);
+        window.addEventListener('resize', resize, false);
+        resize();
+
+        loop();
+
+      }
+
+      function resize() {
+
+        width = window.innerWidth;
+        height = window.innerHeight;
+
+        renderer.setSize(width, height);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+
+      }
+
+      var time = 0,
+          seconds_per_mode = 6.0;
+
+      function loop() {
+
+        requestAnimationFrame(loop);
+        renderer.render(scene, camera);
+
+        cube.rotation.add(cube.rotation.velocity);
+        cube.scale.copy(cube.rotation.velocity);
+
+        cube.scale.x = Math.abs(cube.scale.x) + 1;
+        cube.scale.y = Math.abs(cube.scale.y) + 1;
+        cube.scale.z = Math.abs(cube.scale.z) + 1;
+
+        tbc_geometry.colors.forEach(function (color) {
+          color.lerp(inactive_color, color_fade_rate);
+        });
+        tbc_geometry.colorsNeedUpdate = true;
+
+        time += 1 / 60.0;
+        if (time > seconds_per_mode) {
+          time = 0;
+          current_walker = current_walker.randomExit();
+          other_walker = other_walker.randomExit();
+          current_walker.start();
+          other_walker.start();
+          console.log("Changed to:", current_walker.markov.name);
+          document.getElementById("title").textContent = current_walker.markov.name + ":" + other_walker.markov.name;
+        }
+        current_walker.update(active_color);
+	other_walker.update(alt_color);
+      }
+
+    </script>
+  </body>
+</html>

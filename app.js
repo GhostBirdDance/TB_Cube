@@ -38,7 +38,7 @@ io.sockets
 
     function connect() {
 
-      client = net.connect(9191, '192.168.100.119', function() {
+      client = net.connect(9191, '192.168.100.121', function() {
         socket.emit('connected');
       });
       client.on('data', function(data) {

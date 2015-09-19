@@ -233,12 +233,8 @@
         },
         reset_fn: function (pos) {
           randomizePosition(pos);
-          if (Math.random() < 0.5) {
-            pos[0] = 2;
-          }
-          else {
-            pos[1] = 2;
-          }
+          pos[0] = 2;
+          pos[1] = 2;
         }
       }));
       var current_walker = markov.makeNode("Right To Left", createWalker({ms: 650, step_fn: function (pos) {

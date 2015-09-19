@@ -86,19 +86,10 @@
       camera.position.y = 2.5;
       camera.lookAt(new THREE.Vector3());
 
-      var geometry = new THREE.BoxGeometry(10, 10, 10);
-      var material = new THREE.MeshBasicMaterial({
-        color: 'red',
-        wireframe: true
-      });
-      var cube = new THREE.Mesh(geometry, material);
-      cube.rotation.velocity = new THREE.Vector3();
-      // scene.add(cube);
-
       var tbc_geometry = new THREE.Geometry();
       var inactive_color = new THREE.Color(0x333333),
           active_color = new THREE.Color(0xFF00FF),
-		alt_color = new THREE.Color(0x0099ff),
+          alt_color = new THREE.Color(0x0099ff),
           color_fade_rate = 0.03;
 
       for (var y = 1; y >= -1; y -=1) {
@@ -111,8 +102,29 @@
       }
 
       function build_static_cube() {
+        var geom = new THREE.Geometry();
+        var indices_array = [];
+        for (var z = 0; z <= 2; z += 1) {
+          for (var y = 0; y <= 2; y += 1) {
+            indices_array.push(cubeIndex(0, y, z));
+            indices_array.push(cubeIndex(2, y, z));
 
+            indices_array.push(cubeIndex(y, 0, z));
+            indices_array.push(cubeIndex(y, 2, z));
+
+            indices_array.push(cubeIndex(y, z, 0));
+            indices_array.push(cubeIndex(y, z, 2));
+          }
+        }
+        geom.vertices = indices_array.map(function (value) {
+          return tbc_geometry.vertices[value];
+        });
+        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 3, gapSize: 1, linewidth: 2 } ) );
+        object.scale.set(10, 10, 10);
+        scene.add(object);
       }
+
+      build_static_cube();
 
       var tbc_material = new THREE.PointsMaterial({
         size: 4,
@@ -238,13 +250,6 @@
 
         requestAnimationFrame(loop);
         renderer.render(scene, camera);
-
-        cube.rotation.add(cube.rotation.velocity);
-        cube.scale.copy(cube.rotation.velocity);
-
-        cube.scale.x = Math.abs(cube.scale.x) + 1;
-        cube.scale.y = Math.abs(cube.scale.y) + 1;
-        cube.scale.z = Math.abs(cube.scale.z) + 1;
 
         tbc_geometry.colors.forEach(function (color) {
           color.lerp(inactive_color, color_fade_rate);

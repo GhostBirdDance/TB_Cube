@@ -24,63 +24,6 @@
     <script src="./third-party/three.js"></script>
     <script src="./src/markov.js"></script>
     <script>
-      function on_top(index) {
-        return index < 9;
-      }
-      function up(index) {
-        if (on_top(index)) {
-          return index;
-        }
-        return index - 9;
-      }
-
-      function on_bottom(index) {
-        return index > 17;
-      }
-      function down(index) {
-        if (on_bottom(index)) {
-          return index;
-        }
-        return index + 9;
-      }
-
-      function on_left(index) {
-        return (index % 9) <= 2;
-      }
-      function left(index) {
-        if (on_left(index)) {
-          return index;
-        }
-        return index - 3;
-      }
-      function on_right(index) {
-        return (index % 9) > 5;
-      }
-      function right(index) {
-        if (on_right(index)) {
-          return index;
-        }
-        return index + 3;
-      }
-      function forward(index) {
-        var in_front = ((index - 2) % 3) === 0;
-        if (in_front) {
-          return index;
-        }
-        return index + 1;
-      }
-      function back(index) {
-        var in_back = (index % 3) === 0;
-        if (in_back) {
-          return index;
-        }
-        return index - 1;
-      }
-
-      function randomCubeIndex() {
-        return Math.floor(Math.random() * 27);
-      }
-
       /// Returns cube vertex data at index.
       function cubeVertex(index) {
         return { position: tbc_geometry.vertices[index],
@@ -165,6 +108,10 @@
             tbc_geometry.colors.push(active_color.clone());
           }
         }
+      }
+
+      function build_static_cube() {
+
       }
 
       var tbc_material = new THREE.PointsMaterial({

@@ -191,155 +191,6 @@
       build_corners();
       build_ground();
 
-      function never() { return false; }
-      function nothing() {}
-
-      function createWalker(opt) {
-        var opt = opt || {},
-            walker = {},
-            position = [0, 0, 0],
-            updateTime = Date.now(),
-            time = 0,
-            ms_per_step = opt.ms || 1000,
-            step_fn = opt.step_fn || randomIndex,
-            reset_condition = opt.reset_condition || never,
-            reset_fn = opt.reset_fn || nothing;
-
-        function start(delay) {
-          var delay = delay || 0;
-          updateTime = Date.now();
-          time = -delay;
-          reset_fn(position);
-        }
-
-        function update(color) {
-          var now = Date.now(),
-              dt = now - updateTime;
-          updateTime = now;
-          time += dt;
-
-          if (time > ms_per_step) {
-            activate(spheres[cubeIndex(position)], color);
-            if (reset_condition(position)) {
-              reset_fn(position);
-            }
-            else {
-              step_fn(position);
-            }
-
-            time -= ms_per_step;
-          }
-        }
-
-        walker.start = start;
-        walker.update = update;
-        return walker;
-      }
-
-      function createWalkers() {
-        var ascend_left = markov.makeNode("Ascend Left", createWalker({ms: 1000,
-          step_fn: function (pos) {
-            pos[0] -= 1;
-            pos[1] -= 1;
-            constrainToCube(pos);
-          },
-          reset_condition: function (pos) {
-            return pos[0] <= 0 && pos[1] <= 0;
-          },
-          reset_fn: function (pos) {
-            randomizePosition(pos);
-            pos[0] = 2;
-            pos[1] = 2;
-          }
-        }));
-
-        var ascend_right = markov.makeNode("Ascend Right", createWalker({
-          step_fn: function (pos) {
-            pos[0] += 1;
-            pos[1] -= 1;
-            constrainToCube(pos);
-          },
-          reset_condition: function (pos) {
-            return pos[0] >= 2 && pos[1] <= 0;
-          },
-          reset_fn: function (pos) {
-            randomizePosition(pos);
-            pos[0] = 0;
-            pos[1] = 2;
-          }
-        }));
-
-        var right_to_left = markov.makeNode("Slide Left", createWalker({ms: 1000, step_fn: function (pos) {
-          pos[0] -= 1;
-          constrainToCube(pos);
-        }, reset_condition: function (pos) {
-          return pos[0] <= 0;
-        }, reset_fn: function (pos) {
-          randomizePosition(pos);
-          pos[0] = 2;
-        }
-        }));
-
-        var left_to_right = markov.makeNode("Slide Right", createWalker({
-          step_fn: function (pos) {
-            pos[0] += 1;
-            constrainToCube(pos);
-          },
-          reset_condition: function (pos) {
-            return pos[0] >= 2;
-          },
-          reset_fn: function (pos) {
-            randomizePosition(pos);
-            pos[0] = 0;
-          }
-        }));
-
-        var random_walk = markov.makeNode("Meander", createWalker({ms: 1000,
-          step_fn: function (pos) {
-            function random_offset() {
-              return Math.floor(Math.random() * 3) - 1;
-            }
-            pos.forEach(function (value, index){
-              pos[index] += random_offset();
-            });
-            constrainToCube(pos);
-          }
-        }));
-
-        random_walk.addExit(random_walk, 1.5);
-        random_walk.addExit(right_to_left, 1);
-        random_walk.addExit(left_to_right, 1);
-
-        right_to_left.addExit(right_to_left, 2);
-        right_to_left.addExit(ascend_left, 2);
-        right_to_left.addExit(left_to_right, 2);
-        right_to_left.addExit(random_walk, 0.5);
-
-        left_to_right.addExit(left_to_right, 2);
-        left_to_right.addExit(ascend_right, 2);
-        left_to_right.addExit(right_to_left, 2);
-        left_to_right.addExit(random_walk, 0.5);
-
-        ascend_left.addExit(ascend_left, 1);
-        ascend_left.addExit(right_to_left, 1);
-        ascend_left.addExit(ascend_right, 1);
-
-        ascend_right.addExit(ascend_right, 1);
-        ascend_right.addExit(ascend_left, 1);
-        ascend_right.addExit(left_to_right, 1);
-
-        return {
-          meander: random_walk,
-          ascend_right: ascend_right,
-          ascend_left: ascend_left,
-          right_to_left: right_to_left,
-          left_to_right: left_to_right
-        };
-      }
-
-      var walkers = createWalkers();
-      var current_walker = walkers.meander;
-
       function setup() {
 
         document.body.appendChild(renderer.domElement);
@@ -365,40 +216,43 @@
         return a + (b - a) * t;
       }
 
-      function makeTextUpdater() {
+      function createWordMapping(story) {
         var self = {},
-            lines = [],
-            parent = document.getElementById("instruction_list"),
-            max_items = 5;
-
-        function update(text) {
-          var element = document.createElement("p");
-          element.innerText = text;
-          lines.unshift(element);
-          parent.insertBefore(element, parent.firstChild);
-
-          while (lines.length > max_items) {
-            parent.removeChild(lines[lines.length - 1]);
-            lines.pop();
-          }
-
-          lines.forEach(function (line, index) {
-            var t = Math.floor(255 * mix(0.33, 1.0, index / max_items)),
-                rgb = [t, t, t];
-            line.style.color = "rgb(" + rgb.join(",") + ")";
+            story = story || "Default Story",
+            index = 0;
+        story = story.toLowerCase();
+        var letter_map = (function () {
+          // alphabet indexed so [space] is in the center of cube
+          var alphabet = "abcdefghijklm nopqrstuvwxyz";
+          var dict = {};
+          Array.prototype.forEach.call(alphabet, function (value, index) {
+            dict[value] = index;
           });
+          return dict;
+        }());
+
+        function test(letter) {
+          console.log(letter, letter_map[letter]);
         }
 
-        self.update = update;
+        function next() {
+          var letter = story[index];
+          activate(spheres[letter_map[letter]]);
+          console.log(letter);
+
+          index = (index + 1) % story.length;
+        }
+
+        self.next = next;
+        self.test = test;
         return self;
       }
+      var text = "we are slowly going forwards to the end and each idea that easily arises suggests the next idea repetition here is limited to occasional words and phrases or the echoes of ideas These representations when they occur are a device to heighten or erode an image as it passes They are a moment of recognition for the audience in a sea in a sea of change The pleasures of the familiar can guide us through any landscape including the landscape of language Patten is what allows me to recognize your face in a crow and for you to recognize mine When we speak in unison you are heading the same thing twice simultaneously which reveals small differences in our voices and personalities the size of a nose or the folds of a chin are amplified precisely in relation to the similarities we identify in the face we are studying The smaller the degree of difference in a field of activity the more we perceive what is different We are slowly going forwards to the end and each idea that easily arises suggests the next idea Repetition is a device to intensify or erode something by showing it more than once Replication of a phrase of music can arrive at a rapturous longing for more A melody heard often enough can arrive at a heightened meaning that has passed through boredom into a state of grace The return of a theme alters everything Words repeated arrive eventually at incantation and movement when loop solidifies itself into something that hovers between marching and abandon Repetition is one way of arriving at rhythm We are now a little after the start of the penultimate part of the piece We are moving slowly forward towards the end and each idea that easily arises suggests the next idea which is sometimes a word or a phrase or the imprint of a thought that we have heard before Repetition Repetition is a device to emphasize or erode something by showing it more than once more than once It’s a moment of recognition for the audience in a sea of change The pleasures of the familiar can guide us through any landscape including the landscape of language Replication of a phrase of music can arrive at a rapturous longing for more We wish for more only because we know it will stop eventually Our longing for more is in direct proportion to the expectation we have that things will eventually change We recognize the difference between a repetition that is only filling time and a repetition that resist deliciously our desire for the new without us ever feeling bored or frustrated The repetition of a melody or a sentence can pass through boredom into a state of grace Movements looped solidify themselves into something that hovers between marching and flight Words repeated arrive eventually and irresistibly at prayer When we speak in unison you are hearing the same thing twice simultaneously which reveals small differences in our voices and personalities The size of a nose or the folds of a chin are amplified in our perception because a face is a thing so recognizable that the smallest imperfection stands out like punctuation The smaller the degrees of difference in a field of activity the more we perceive what is different Repetition is useful sometimes in building the necessity for a change Repetition Repetition is also a way to arrive at rhythm";
+      var narrative = createWordMapping(text);
 
       var time = 0,
-          seconds_per_mode = 10.0,
-          scale_fade_rate = 0.03,
-          text_updater = makeTextUpdater();
-
-      text_updater.update(current_walker.markov.name);
+          seconds_per_letter = 1.0,
+          scale_fade_rate = 0.03;
 
       function loop() {
 
@@ -412,13 +266,10 @@
         });
 
         time += 1 / 60.0;
-        if (time > seconds_per_mode) {
+        if (time > seconds_per_letter) {
           time = 0;
-          current_walker = current_walker.randomExit();
-          current_walker.start(750);
-          text_updater.update(current_walker.markov.name);
+          narrative.next();
         }
-        current_walker.update();
       }
 
       // Start it all!

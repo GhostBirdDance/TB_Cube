@@ -139,13 +139,35 @@
         mesh_c.rotation.x = Math.PI / 2;
         mesh_c.position.z = -0.5;
 
-        var group = new THREE.Object3D();
-        group.add(mesh_a);
-        group.add(mesh_b);
-        group.add(mesh_c);
-        group.position.set(-5, -5, 5);
+        var left = new THREE.Object3D();
+        left.add(mesh_a);
+        left.add(mesh_b);
+        left.add(mesh_c);
+        left.position.set(-5, -5, 5);
 
-        scene.add(group);
+        var right = left.clone();
+        right.position.set(5, -5, 5);
+        right.scale.x = -1;
+
+        var fb = new THREE.Object3D();
+        fb.add(left);
+        fb.add(right);
+
+        var bb = fb.clone();
+        bb.scale.z = -1;
+
+        var bottom = new THREE.Object3D();
+        bottom.add(bb);
+        bottom.add(fb);
+
+        var top = bottom.clone();
+        top.scale.y = -1;
+
+        var everything = new THREE.Object3D();
+        everything.add(top);
+        everything.add(bottom);
+
+        scene.add(everything);
       }
 
       function build_ground() {

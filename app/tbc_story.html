@@ -222,7 +222,8 @@
             index = 0;
         story = story.toLowerCase();
         var letter_map = (function () {
-          var alphabet = "abcdefghijklmnopqrstuvwxyz ";
+          // alphabet indexed so [space] is in the center of cube
+          var alphabet = "abcdefghijklm nopqrstuvwxyz";
           var dict = {};
           Array.prototype.forEach.call(alphabet, function (value, index) {
             dict[value] = index;
@@ -246,8 +247,8 @@
         self.test = test;
         return self;
       }
-
-      var narrative = createWordMapping("Hello everything is okay right now");
+      var text = "we are slowly going forwards to the end and each idea that easily arises suggests the next idea repetition here is limited to occasional words and phrases or the echoes of ideas These representations when they occur are a device to heighten or erode an image as it passes They are a moment of recognition for the audience in a sea in a sea of change The pleasures of the familiar can guide us through any landscape including the landscape of language Patten is what allows me to recognize your face in a crow and for you to recognize mine When we speak in unison you are heading the same thing twice simultaneously which reveals small differences in our voices and personalities the size of a nose or the folds of a chin are amplified precisely in relation to the similarities we identify in the face we are studying The smaller the degree of difference in a field of activity the more we perceive what is different We are slowly going forwards to the end and each idea that easily arises suggests the next idea Repetition is a device to intensify or erode something by showing it more than once Replication of a phrase of music can arrive at a rapturous longing for more A melody heard often enough can arrive at a heightened meaning that has passed through boredom into a state of grace The return of a theme alters everything Words repeated arrive eventually at incantation and movement when loop solidifies itself into something that hovers between marching and abandon Repetition is one way of arriving at rhythm We are now a little after the start of the penultimate part of the piece We are moving slowly forward towards the end and each idea that easily arises suggests the next idea which is sometimes a word or a phrase or the imprint of a thought that we have heard before Repetition Repetition is a device to emphasize or erode something by showing it more than once more than once It’s a moment of recognition for the audience in a sea of change The pleasures of the familiar can guide us through any landscape including the landscape of language Replication of a phrase of music can arrive at a rapturous longing for more We wish for more only because we know it will stop eventually Our longing for more is in direct proportion to the expectation we have that things will eventually change We recognize the difference between a repetition that is only filling time and a repetition that resist deliciously our desire for the new without us ever feeling bored or frustrated The repetition of a melody or a sentence can pass through boredom into a state of grace Movements looped solidify themselves into something that hovers between marching and flight Words repeated arrive eventually and irresistibly at prayer When we speak in unison you are hearing the same thing twice simultaneously which reveals small differences in our voices and personalities The size of a nose or the folds of a chin are amplified in our perception because a face is a thing so recognizable that the smallest imperfection stands out like punctuation The smaller the degrees of difference in a field of activity the more we perceive what is different Repetition is useful sometimes in building the necessity for a change Repetition Repetition is also a way to arrive at rhythm";
+      var narrative = createWordMapping(text);
 
       var time = 0,
           seconds_per_letter = 1.0,

@@ -91,11 +91,9 @@
       var path = new Two.Path(points);
       path.translation.set(two.width / 2, two.height / 2);
       path.noFill().stroke = 'white';
-      path.linewidth = (two.width / 8) * total / 5000;
-      path.cap = tp < 100 ? 'round' : 'butt';
-      path.join = tp < 100 ? 'round' : 'miter';
-      path.curved = tp < 100;
-      // path.miter = tp < 100 ? 4 : 12;
+      path.linewidth = (two.width / 8) * Math.sqrt(total / 10000);
+      path.cap = tp < 150 ? 'round' : 'butt';
+      path.curved = tp < 150;
       path.tweens = {
         i: new TWEEN.Tween(path),
         o: new TWEEN.Tween(path)

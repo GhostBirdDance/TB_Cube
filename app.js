@@ -38,6 +38,8 @@ io.sockets
 
     function connect() {
 
+      var csv = 'x, y, z\n';
+
       client = net.connect(9191, '192.168.100.119', function() {
         socket.emit('connected');
       });
@@ -45,10 +47,19 @@ io.sockets
         var resp = data.toString();
         if (/acceleration/ig.test(resp)) {
           socket.emit('message', resp);
+          var xm = resp.match(/\"x\"\s\:\s([\-0123456789\.]*)/);
+          var ym = resp.match(/\"y\"\s\:\s([\-0123456789\.]*)/);
+          var zm = resp.match(/\"z\"\s\:\s([\-0123456789\.]*)/)
+          csv += xm[1] + ', ' + ym[1] + ', ' + zm[1] + '\n';
         }
         client.end();
       });
       client.on('end', function() {
+        var filename = './logs/' + new Date().toUTCString() + '.csv';
+        fs.writeFile(filename, csv, function(err) {
+          if (err) throw err;
+          console.log('saved', filename);
+        });
         socket.emit('ended');
       });
 

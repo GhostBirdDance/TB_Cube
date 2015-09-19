@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head></head>
+  <body>
+    <div class="scripts">
+      <script src="./third-party/three.js"></script>
+      <script src="./third-party/trail.js"></script>
+      <script>
+
+        var renderer = new THREE.WebGLRenderer();
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(60);
+
+        var trail = new Trail();
+        scene.add(trail);
+
+      </script>
+    </div>
+  </body>
+</html>

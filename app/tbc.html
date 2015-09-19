@@ -313,12 +313,10 @@
           current_walker = current_walker.randomExit();
           other_walker = other_walker.randomExit();
           current_walker.start();
-          other_walker.start();
           console.log("Changed to:", current_walker.markov.name);
           document.getElementById("title").textContent = current_walker.markov.name + ":" + other_walker.markov.name;
         }
         current_walker.update();
-        other_walker.update();
       }
 
       // Start it all!

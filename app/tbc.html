@@ -79,9 +79,10 @@
 
       var width, height;
 
-      var renderer = new THREE.WebGLRenderer({ antialias: false });
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
       var scene = new THREE.Scene();
       var camera = new THREE.PerspectiveCamera(60);
+      scene.fog = new THREE.Fog( 0x111111, 20, 30 );
       camera.position.z = 20;
       camera.position.y = 2.5;
       camera.lookAt(new THREE.Vector3());
@@ -117,10 +118,10 @@
           }
         }
         geom.vertices = indices_array.map(function (value) {
-          return tbc_geometry.vertices[value];
+          return tbc_geometry.vertices[value].clone().multiplyScalar(10.0);
         });
-        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 3, gapSize: 1, linewidth: 2 } ) );
-        object.scale.set(10, 10, 10);
+        geom.computeLineDistances();
+        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0x0099FF, dashSize: 1, gapSize: 1, linewidth: 4 } ) );
         scene.add(object);
       }
 

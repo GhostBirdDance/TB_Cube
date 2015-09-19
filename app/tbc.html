@@ -126,7 +126,17 @@
         scene.add(object);
       }
 
+      function build_ground()
+      {
+        var geom = new THREE.PlaneGeometry(80, 40, 1, 1);
+        var object = new THREE.Mesh(geom, new THREE.MeshBasicMaterial());
+        object.position.y = -6.0;
+        object.rotation.x = -Math.PI / 2;
+        scene.add(object);
+      }
+
       build_static_cube();
+      build_ground();
 
       var tbc_material = new THREE.PointsMaterial({
         size: 4,

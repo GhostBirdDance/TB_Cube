@@ -3,6 +3,7 @@ var express = require('express');
 var app = express();
 var io = require('socket.io').listen(app.listen(8080));
 var fs = require('fs');
+var uuid = require('node-uuid');
 
 var pages = {
   index: fs.readFileSync(__dirname + '/app/index.html')
@@ -32,36 +33,44 @@ app
 io.sockets
   .on('connection', function(socket) {
 
-    var client;
+    var client, csv = '';
 
     socket.on('restart', connect);
 
+    function receive(data) {
+      var resp = data.toString();
+      if (/acceleration/ig.test(resp)) {
+        socket.emit('message', resp);
+        var xm = resp.match(/\"x\"\s\:\s([\-0123456789\.]*)/);
+        var ym = resp.match(/\"y\"\s\:\s([\-0123456789\.]*)/);
+        var zm = resp.match(/\"z\"\s\:\s([\-0123456789\.]*)/)
+        csv += xm[1] + ', ' + ym[1] + ', ' + zm[1] + '\n';
+      }
+      client.end();
+    }
+
+    function end() {
+      var filename = './logs/' + uuid.v4() + '.csv';
+      fs.writeFile(filename, csv, function(err) {
+        if (err) throw err;
+        console.log('saved', filename);
+        csv = '';
+      });
+      socket.emit('ended');
+    }
+
     function connect() {
 
-      var csv = 'x, y, z\n';
+      if (csv) {
+        end();
+      }
 
       client = net.connect(9191, '192.168.100.119', function() {
+        csv = 'x, y, z\n';
         socket.emit('connected');
       });
-      client.on('data', function(data) {
-        var resp = data.toString();
-        if (/acceleration/ig.test(resp)) {
-          socket.emit('message', resp);
-          var xm = resp.match(/\"x\"\s\:\s([\-0123456789\.]*)/);
-          var ym = resp.match(/\"y\"\s\:\s([\-0123456789\.]*)/);
-          var zm = resp.match(/\"z\"\s\:\s([\-0123456789\.]*)/)
-          csv += xm[1] + ', ' + ym[1] + ', ' + zm[1] + '\n';
-        }
-        client.end();
-      });
-      client.on('end', function() {
-        var filename = './logs/' + new Date().toUTCString() + '.csv';
-        fs.writeFile(filename, csv, function(err) {
-          if (err) throw err;
-          console.log('saved', filename);
-        });
-        socket.emit('ended');
-      });
+      client.on('data', receive);
+      client.on('end', end);
 
     }
 

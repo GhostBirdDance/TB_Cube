@@ -233,14 +233,14 @@
       }
 
       function createWalkers() {
-        var diagonal = markov.makeNode("Ascend Left", createWalker({ms: 1000,
+        var ascend_left = markov.makeNode("Ascend Left", createWalker({ms: 1000,
           step_fn: function (pos) {
             pos[0] -= 1;
             pos[1] -= 1;
             constrainToCube(pos);
           },
           reset_condition: function (pos) {
-            return pos[0] <= 0 && pos[1] <= 1;
+            return pos[0] <= 0 && pos[1] <= 0;
           },
           reset_fn: function (pos) {
             randomizePosition(pos);
@@ -248,6 +248,23 @@
             pos[1] = 2;
           }
         }));
+
+        var ascend_right = markov.makeNode("Ascend Right", createWalker({
+          step_fn: function (pos) {
+            pos[0] += 1;
+            pos[1] -= 1;
+            constrainToCube(pos);
+          },
+          reset_condition: function (pos) {
+            return pos[0] >= 2 && pos[1] <= 0;
+          },
+          reset_fn: function (pos) {
+            randomizePosition(pos);
+            pos[0] = 0;
+            pos[1] = 0;
+          }
+        }));
+
         var right_to_left = markov.makeNode("Slide Left", createWalker({ms: 1000, step_fn: function (pos) {
           pos[0] -= 1;
           constrainToCube(pos);
@@ -289,16 +306,23 @@
         random_walk.addExit(right_to_left, 1);
         random_walk.addExit(left_to_right, 1);
 
-        right_to_left.addExit(random_walk, 1);
-        right_to_left.addExit(diagonal, 2);
         right_to_left.addExit(right_to_left, 2);
+        right_to_left.addExit(ascend_left, 2);
         right_to_left.addExit(left_to_right, 2);
+        right_to_left.addExit(random_walk, 0.5);
 
-        left_to_right.addExit(left_to_right, 1);
-        left_to_right.addExit(right_to_left, 1);
+        left_to_right.addExit(left_to_right, 2);
+        left_to_right.addExit(ascend_right, 2);
+        left_to_right.addExit(right_to_left, 2);
+        left_to_right.addExit(random_walk, 0.5);
 
-        diagonal.addExit(diagonal, 1);
-        diagonal.addExit(right_to_left, 1);
+        ascend_left.addExit(ascend_left, 1);
+        ascend_left.addExit(right_to_left, 1);
+        ascend_left.addExit(ascend_right, 1);
+
+        ascend_right.addExit(ascend_right, 1);
+        ascend_right.addExit(ascend_left, 1);
+        ascend_right.addExit(left_to_right, 1);
 
         return random_walk;
       }

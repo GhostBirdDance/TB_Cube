@@ -201,9 +201,10 @@
             reset_condition = opt.reset_condition || never,
             reset_fn = opt.reset_fn || nothing;
 
-        function start() {
+        function start(delay) {
+          var delay = delay || 0;
           updateTime = Date.now();
-          time = 0;
+          time = -delay;
           reset_fn(position);
         }
 
@@ -325,7 +326,7 @@
         if (time > seconds_per_mode) {
           time = 0;
           current_walker = current_walker.randomExit();
-          current_walker.start();
+          current_walker.start(750);
           console.log("Change:", current_walker.markov.name);
           document.getElementById("title").textContent = current_walker.markov.name;
         }

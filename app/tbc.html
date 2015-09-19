@@ -231,45 +231,59 @@
         return walker;
       }
 
-      var other_walker = markov.makeNode("Diagonal", createWalker({ms: 1000,
-        step_fn: function (pos) {
+      function createWalkers() {
+        var diagonal = markov.makeNode("Diagonal", createWalker({ms: 1000,
+          step_fn: function (pos) {
+            pos[0] -= 1;
+            pos[1] -= 1;
+            constrainToCube(pos);
+          },
+          reset_condition: function (pos) {
+            return pos[0] <= 0 && pos[1] <= 1;
+          },
+          reset_fn: function (pos) {
+            randomizePosition(pos);
+            pos[0] = 2;
+            pos[1] = 2;
+          }
+        }));
+        var right_to_left = markov.makeNode("Right To Left", createWalker({ms: 1000, step_fn: function (pos) {
           pos[0] -= 1;
-          pos[1] -= 1;
           constrainToCube(pos);
-        },
-        reset_condition: function (pos) {
-          return pos[0] <= 0 && pos[1] <= 1;
-        },
-        reset_fn: function (pos) {
+        }, reset_condition: function (pos) {
+          return pos[0] <= 0;
+        }, reset_fn: function (pos) {
           randomizePosition(pos);
           pos[0] = 2;
-          pos[1] = 2;
         }
-      }));
-      var current_walker = markov.makeNode("Right To Left", createWalker({ms: 1000, step_fn: function (pos) {
-        pos[0] -= 1;
-        constrainToCube(pos);
-      }, reset_condition: function (pos) {
-        return pos[0] <= 0;
-      }, reset_fn: function (pos) {
-        randomizePosition(pos);
-        pos[0] = 2;
-      }
-      }));
+        }));
 
-      var random_walk = markov.makeNode("Random Walk", createWalker({ms: 1000,
-        step_fn: function (pos) {
-          function random_offset() {
-            return Math.floor(Math.random() * 3) - 1;
+        var random_walk = markov.makeNode("Random Walk", createWalker({ms: 1000,
+          step_fn: function (pos) {
+            function random_offset() {
+              return Math.floor(Math.random() * 3) - 1;
+            }
+            pos.forEach(function (value, index){
+              pos[index] += random_offset();
+            });
+            constrainToCube(pos);
           }
-          pos.forEach(function (value, index){
-            pos[index] += random_offset();
-          });
-          constrainToCube(pos);
-        }
-      }));
+        }));
 
-      current_walker = random_walk;
+        random_walk.addExit(random_walk, 1.5);
+        random_walk.addExit(right_to_left, 1);
+
+        right_to_left.addExit(random_walk, 1);
+        right_to_left.addExit(diagonal, 2);
+        right_to_left.addExit(right_to_left, 2);
+
+        diagonal.addExit(diagonal, 1);
+        diagonal.addExit(right_to_left, 1);
+
+        return random_walk;
+      }
+
+      var current_walker = createWalkers();
 
       function setup() {
 
@@ -311,10 +325,9 @@
         if (time > seconds_per_mode) {
           time = 0;
           current_walker = current_walker.randomExit();
-          other_walker = other_walker.randomExit();
           current_walker.start();
-          console.log("Changed to:", current_walker.markov.name);
-          document.getElementById("title").textContent = current_walker.markov.name + ":" + other_walker.markov.name;
+          console.log("Change:", current_walker.markov.name);
+          document.getElementById("title").textContent = current_walker.markov.name;
         }
         current_walker.update();
       }

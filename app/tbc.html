@@ -82,13 +82,14 @@
       var renderer = new THREE.WebGLRenderer({ antialias: true });
       var scene = new THREE.Scene();
       var camera = new THREE.PerspectiveCamera(60);
-      scene.fog = new THREE.Fog( 0x111111, 20, 30 );
+      scene.fog = new THREE.Fog( 0xcccccc, 20, 30 );
       camera.position.z = 20;
       camera.position.y = 2.5;
       camera.lookAt(new THREE.Vector3());
+      renderer.setClearColor(new THREE.Color(0xcccccc));
 
       var tbc_geometry = new THREE.Geometry();
-      var inactive_color = new THREE.Color(0x333333),
+      var inactive_color = new THREE.Color(0xffffff),
           active_color = new THREE.Color(0xFF00FF),
           alt_color = new THREE.Color(0x0099ff),
           color_fade_rate = 0.03;
@@ -121,7 +122,7 @@
           return tbc_geometry.vertices[value].clone().multiplyScalar(10.0);
         });
         geom.computeLineDistances();
-        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0x0099FF, dashSize: 1, gapSize: 1, linewidth: 4 } ) );
+        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0x0099FF, dashSize: 0.1, gapSize: 0.1, linewidth: 1 } ) );
         scene.add(object);
       }
 

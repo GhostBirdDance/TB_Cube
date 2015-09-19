@@ -357,9 +357,27 @@
 
       }
 
+      function makeTextUpdater() {
+        var self = {},
+            lines = [];
+
+        function update(text) {
+          console.log("Change:", current_walker.markov.name);
+          lines.unshift(text);
+          document.getElementById("title").innerHTML = lines.join("<br>");
+          lines = lines.slice(0, 10);
+        }
+
+        self.update = update;
+        return self;
+      }
+
       var time = 0,
           seconds_per_mode = 10.0,
-          scale_fade_rate = 0.03;
+          scale_fade_rate = 0.03,
+          text_updater = makeTextUpdater();
+
+      text_updater.update(current_walker.markov.name);
 
       function loop() {
 
@@ -377,8 +395,7 @@
           time = 0;
           current_walker = current_walker.randomExit();
           current_walker.start(750);
-          console.log("Change:", current_walker.markov.name);
-          document.getElementById("title").textContent = current_walker.markov.name;
+          text_updater.update(current_walker.markov.name);
         }
         current_walker.update();
       }

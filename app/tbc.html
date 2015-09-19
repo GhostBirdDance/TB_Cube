@@ -24,132 +24,187 @@
     <script src="./third-party/three.js"></script>
     <script src="./src/markov.js"></script>
     <script>
-      function on_top(index) {
-        return index < 9;
-      }
-      function up(index) {
-        if (on_top(index)) {
-          return index;
+      /// Convert a grid position into a cube index.
+      function cubeIndex(x, y, z) {
+        if (Array.isArray(x)) {
+          y = x[1];
+          z = x[2];
+          x = x[0];
         }
-        return index - 9;
+        var level = Math.min(y, 2) * 9;
+        var left = Math.min(x, 2) * 3;
+        var depth = Math.min(z, 2);
+        return level + left + depth;
       }
 
-      function on_bottom(index) {
-        return index > 17;
-      }
-      function down(index) {
-        if (on_bottom(index)) {
-          return index;
-        }
-        return index + 9;
-      }
-
-      function on_left(index) {
-        return (index % 9) <= 2;
-      }
-      function left(index) {
-        if (on_left(index)) {
-          return index;
-        }
-        return index - 3;
-      }
-      function on_right(index) {
-        return (index % 9) > 5;
-      }
-      function right(index) {
-        if (on_right(index)) {
-          return index;
-        }
-        return index + 3;
-      }
-      function forward(index) {
-        var in_front = ((index - 2) % 3) === 0;
-        if (in_front) {
-          return index;
-        }
-        return index + 1;
-      }
-      function back(index) {
-        var in_back = (index % 3) === 0;
-        if (in_back) {
-          return index;
-        }
-        return index - 1;
+      /// Returns a random position in a cube.
+      function randomPosition(size) {
+        var size = size || 3;
+        return [Math.floor(Math.random() * size),
+                Math.floor(Math.random() * size),
+                Math.floor(Math.random() * size)
+        ];
       }
 
-      function randomIndex() {
-        return Math.floor(Math.random() * 27);
+      function randomIndex(size) {
+        var size = size || 3;
+        return Math.floor(Math.random() * size);
       }
 
-      function position(index) {
-        return { position: tbc_geometry.vertices[index],
-                 color: tbc_geometry.colors[index] };
-      };
+      function randomizePosition(position, size) {
+        var size = size || 3;
+        position.forEach(function (value, index) {
+          position[index] = Math.floor(Math.random() * size);
+        })
+      }
+
+      function constrainToCube(arr, dims) {
+        var dims = (dims - 1) || 2;
+        arr.forEach(function (value, index) {
+          arr[index] = Math.max(Math.min(value, dims), 0);
+        });
+      }
 
       /// Activate a position with a decay
-      function activate(p, color) {
-	var color = color || active_color;
-        p.color.set(color);
+      function activate(sphere, color) {
+        var s = 1.6;
+        sphere.scale.set(s, s, s);
       }
 
       var width, height;
 
-      var renderer = new THREE.WebGLRenderer({ antialias: false });
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
       var scene = new THREE.Scene();
       var camera = new THREE.PerspectiveCamera(60);
+      scene.fog = new THREE.Fog( 0xcccccc, 5, 40 );
       camera.position.z = 20;
       camera.position.y = 2.5;
       camera.lookAt(new THREE.Vector3());
+      renderer.setClearColor(new THREE.Color(0xcccccc));
 
-      var geometry = new THREE.BoxGeometry(10, 10, 10);
-      var material = new THREE.MeshBasicMaterial({
-        color: 'red',
-        wireframe: true
-      });
-      var cube = new THREE.Mesh(geometry, material);
-      cube.rotation.velocity = new THREE.Vector3();
-      // scene.add(cube);
+      function build_spheres() {
+        var spheres = [],
+            sphere = new THREE.SphereGeometry(1, 128, 128);
 
-      var tbc_geometry = new THREE.Geometry();
-      var inactive_color = new THREE.Color(0x333333),
-          active_color = new THREE.Color(0xFF00FF),
-		alt_color = new THREE.Color(0x0099ff),
-          color_fade_rate = 0.05;
-
-      for (var y = 1; y >= -1; y -=1) {
-        for (var x = -1; x <= 1; x +=1) {
-          for (var z = -1; z <= 1; z += 1) {
-            tbc_geometry.vertices.push(new THREE.Vector3(x * 0.5, y * 0.5, z * 0.5));
-            tbc_geometry.colors.push(active_color.clone());
+        for (var y = 1; y >= -1; y -=1) {
+          for (var x = -1; x <= 1; x +=1) {
+            for (var z = -1; z <= 1; z += 1) {
+              var material = new THREE.MeshBasicMaterial({color:0x000000});
+              var mesh = new THREE.Mesh(sphere, material);
+              spheres.push(mesh);
+              scene.add(mesh);
+              mesh.position.set(x * 5, y * 5, z * 5);
+            }
           }
         }
+        return spheres;
       }
 
-      position(2).color.set(0xFF00FF);
+      var spheres = build_spheres();
 
-      var tbc_material = new THREE.PointsMaterial({
-        size: 4,
-        vertexColors: THREE.VertexColors,
-        map: THREE.ImageUtils.loadTexture("img/ring.png"),
-        transparent: true
-      });
-      var tbc_mesh = new THREE.Points(tbc_geometry, tbc_material);
-      tbc_mesh.scale.set(10, 10, 10);
-      scene.add(tbc_mesh);
+      function build_static_cube() {
+        var geom = new THREE.Geometry();
+        var indices_array = [];
+        for (var z = 0; z <= 2; z += 1) {
+          for (var y = 0; y <= 2; y += 1) {
+            indices_array.push(cubeIndex(0, y, z));
+            indices_array.push(cubeIndex(2, y, z));
+
+            indices_array.push(cubeIndex(y, 0, z));
+            indices_array.push(cubeIndex(y, 2, z));
+
+            indices_array.push(cubeIndex(y, z, 0));
+            indices_array.push(cubeIndex(y, z, 2));
+          }
+        }
+        geom.vertices = indices_array.map(function (value) {
+          return spheres[value].position.clone();
+        });
+        geom.computeLineDistances();
+        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0x332121, dashSize: 0.1, gapSize: 0.1, linewidth: 2.0 } ) );
+        scene.add(object);
+      }
+
+      function build_corners() {
+        var geom = new THREE.CylinderGeometry(0.1, 0.1, 1);
+        var material = new THREE.MeshBasicMaterial( { color: 0x110000, side: THREE.DoubleSide } );
+        var mesh_a = new THREE.Mesh(geom, material);
+        var mesh_b = new THREE.Mesh(geom, material);
+        var mesh_c = new THREE.Mesh(geom, material);
+
+        mesh_a.position.y = 0.5;
+        mesh_b.rotation.z = Math.PI / 2;
+        mesh_b.position.x = 0.5;
+        mesh_c.rotation.x = Math.PI / 2;
+        mesh_c.position.z = -0.5;
+
+        var left = new THREE.Object3D();
+        left.add(mesh_a);
+        left.add(mesh_b);
+        left.add(mesh_c);
+        left.position.set(-5, -5, 5);
+
+        var right = left.clone();
+        right.position.set(5, -5, 5);
+        right.scale.x = -1;
+
+        var fb = new THREE.Object3D();
+        fb.add(left);
+        fb.add(right);
+
+        var bb = fb.clone();
+        bb.scale.z = -1;
+
+        var bottom = new THREE.Object3D();
+        bottom.add(bb);
+        bottom.add(fb);
+
+        var top = bottom.clone();
+        top.scale.y = -1;
+
+        var everything = new THREE.Object3D();
+        everything.add(top);
+        everything.add(bottom);
+
+        scene.add(everything);
+      }
+
+      function build_ground() {
+        var geom = new THREE.PlaneGeometry(80, 40, 1, 1);
+        var object = new THREE.Mesh(geom, new THREE.MeshBasicMaterial());
+        object.position.y = -6.0;
+        object.rotation.x = -Math.PI / 2;
+        scene.add(object);
+
+        // shadow
+        var shadow = new THREE.CylinderGeometry(9, 9, 0, 64);
+        object = new THREE.Mesh(shadow, new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.1}));
+        object.position.y = -5.9;
+        scene.add(object);
+      }
+
+      build_static_cube();
+      build_corners();
+      build_ground();
+
+      function never() { return false; }
+      function nothing() {}
 
       function createWalker(opt) {
         var opt = opt || {},
             walker = {},
-            index = 0,
+            position = [0, 0, 0],
             updateTime = Date.now(),
             time = 0,
             ms_per_step = opt.ms || 500,
-            step_fn = opt.step_fn || right,
-            reset_condition = opt.reset_condition || on_right;
+            step_fn = opt.step_fn || randomIndex,
+            reset_condition = opt.reset_condition || never,
+            reset_fn = opt.reset_fn || nothing;
 
         function start() {
           updateTime = Date.now();
           time = 0;
+          reset_fn(position);
         }
 
         function update(color) {
@@ -159,12 +214,12 @@
           time += dt;
 
           if (time > ms_per_step) {
-            activate(position(index), color);
-            if (reset_condition(index)) {
-              index = randomIndex();
+            activate(spheres[cubeIndex(position)], color);
+            if (reset_condition(position)) {
+              reset_fn(position);
             }
             else {
-              index = step_fn(index);
+              step_fn(position);
             }
 
             time -= ms_per_step;
@@ -176,32 +231,45 @@
         return walker;
       }
 
-      var walker_lr = markov.makeNode("Left To Right", createWalker({ms: 800}));
-      var walker_rl = markov.makeNode("Right To Left", createWalker({ms: 650, step_fn: left, reset_condition: on_left})),
-          walker_bt = markov.makeNode("Bottom To Top", createWalker({ms: 900, step_fn: up, reset_condition: on_top})),
-          walker_tb = markov.makeNode("Top to Bottom", createWalker({ms: 1200, step_fn: down, reset_condition: on_bottom})),
-          current_walker = walker_lr,
-	  other_walker = walker_bt;
+      var other_walker = markov.makeNode("Diagonal", createWalker({ms: 1000,
+        step_fn: function (pos) {
+          pos[0] -= 1;
+          pos[1] -= 1;
+          constrainToCube(pos);
+        },
+        reset_condition: function (pos) {
+          return pos[0] <= 0 && pos[1] <= 1;
+        },
+        reset_fn: function (pos) {
+          randomizePosition(pos);
+          pos[0] = 2;
+          pos[1] = 2;
+        }
+      }));
+      var current_walker = markov.makeNode("Right To Left", createWalker({ms: 1000, step_fn: function (pos) {
+        pos[0] -= 1;
+        constrainToCube(pos);
+      }, reset_condition: function (pos) {
+        return pos[0] <= 0;
+      }, reset_fn: function (pos) {
+        randomizePosition(pos);
+        pos[0] = 2;
+      }
+      }));
 
-      walker_rl.addExit(walker_rl, 1);
-      walker_rl.addExit(walker_lr, 4);
-      walker_rl.addExit(walker_bt, 2);
-      walker_rl.addExit(walker_tb, 2);
+      var random_walk = markov.makeNode("Random Walk", createWalker({ms: 1000,
+        step_fn: function (pos) {
+          function random_offset() {
+            return Math.floor(Math.random() * 3) - 1;
+          }
+          pos.forEach(function (value, index){
+            pos[index] += random_offset();
+          });
+          constrainToCube(pos);
+        }
+      }));
 
-      walker_lr.addExit(walker_rl, 2);
-      walker_lr.addExit(walker_lr, 2);
-      walker_lr.addExit(walker_bt, 1);
-      walker_lr.addExit(walker_tb, 1);
-
-      walker_tb.addExit(walker_tb, 1);
-      walker_tb.addExit(walker_bt, 2);
-
-      walker_bt.addExit(walker_bt, 2);
-      walker_bt.addExit(walker_tb, 2);
-      walker_bt.addExit(walker_lr, 1);
-      walker_bt.addExit(walker_rl, 1);
-
-      setup();
+      current_walker = random_walk;
 
       function setup() {
 
@@ -225,24 +293,19 @@
       }
 
       var time = 0,
-          seconds_per_mode = 6.0;
+          seconds_per_mode = 10.0,
+          scale_fade_rate = 0.03;
 
       function loop() {
 
         requestAnimationFrame(loop);
         renderer.render(scene, camera);
 
-        cube.rotation.add(cube.rotation.velocity);
-        cube.scale.copy(cube.rotation.velocity);
-
-        cube.scale.x = Math.abs(cube.scale.x) + 1;
-        cube.scale.y = Math.abs(cube.scale.y) + 1;
-        cube.scale.z = Math.abs(cube.scale.z) + 1;
-
-        tbc_geometry.colors.forEach(function (color) {
-          color.lerp(inactive_color, color_fade_rate);
+        spheres.forEach(function(sphere) {
+          sphere.scale.x += (0.2 - sphere.scale.x) * scale_fade_rate;
+          sphere.scale.y += (0.2 - sphere.scale.y) * scale_fade_rate;
+          sphere.scale.z += (0.2 - sphere.scale.z) * scale_fade_rate;
         });
-        tbc_geometry.colorsNeedUpdate = true;
 
         time += 1 / 60.0;
         if (time > seconds_per_mode) {
@@ -254,10 +317,12 @@
           console.log("Changed to:", current_walker.markov.name);
           document.getElementById("title").textContent = current_walker.markov.name + ":" + other_walker.markov.name;
         }
-        current_walker.update(active_color);
-	other_walker.update(alt_color);
+        current_walker.update();
+        other_walker.update();
       }
 
+      // Start it all!
+      setup();
     </script>
   </body>
 </html>

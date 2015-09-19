@@ -52,6 +52,14 @@
           console.log("State markov name:", state.markov.name);
         }
 
+        var states = markov.makeNode("States");
+        states.addExit(states, 2);
+        states.addExit(awesome, 1);
+        // states.addExit(whatever, 2);
+        for (var i = 0; i <= 1.0; i += 0.05) {
+            console.log("States goes to:", states.findExit(i).markov.name);
+        }
+
         /// If you don't add any exit nodes, the node will always transition to itself.
         var noExit = markov.makeNode("Sartre");
         for (var i = 0; i < 100; i += 1) {

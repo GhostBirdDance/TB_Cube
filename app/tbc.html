@@ -261,7 +261,7 @@
           reset_fn: function (pos) {
             randomizePosition(pos);
             pos[0] = 0;
-            pos[1] = 0;
+            pos[1] = 2;
           }
         }));
 
@@ -324,10 +324,17 @@
         ascend_right.addExit(ascend_left, 1);
         ascend_right.addExit(left_to_right, 1);
 
-        return random_walk;
+        return {
+          meander: random_walk,
+          ascend_right: ascend_right,
+          ascend_left: ascend_left,
+          right_to_left: right_to_left,
+          left_to_right: left_to_right
+        };
       }
 
-      var current_walker = createWalkers();
+      var walkers = createWalkers();
+      var current_walker = walkers.meander;
 
       function setup() {
 

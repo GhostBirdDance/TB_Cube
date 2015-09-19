@@ -176,6 +176,12 @@
         object.position.y = -6.0;
         object.rotation.x = -Math.PI / 2;
         scene.add(object);
+
+        // shadow
+        var shadow = new THREE.CylinderGeometry(9, 9, 0, 64);
+        object = new THREE.Mesh(shadow, new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.1}));
+        object.position.y = -5.9;
+        scene.add(object);
       }
 
       build_static_cube();

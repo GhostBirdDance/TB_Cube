@@ -156,7 +156,7 @@
       var inactive_color = new THREE.Color(0x333333),
           active_color = new THREE.Color(0xFF00FF),
 		alt_color = new THREE.Color(0x0099ff),
-          color_fade_rate = 0.05;
+          color_fade_rate = 0.03;
 
       for (var y = 1; y >= -1; y -=1) {
         for (var x = -1; x <= 1; x +=1) {
@@ -221,12 +221,11 @@
         return walker;
       }
 
-      var other_walker = markov.makeNode("Diagonal", createWalker({ms: 800,
+      var other_walker = markov.makeNode("Diagonal", createWalker({ms: 1000,
         step_fn: function (pos) {
           pos[0] -= 1;
           pos[1] -= 1;
           constrainToCube(pos);
-          console.log(pos);
         },
         reset_condition: function (pos) {
           return pos[0] <= 0 && pos[1] <= 1;
@@ -237,7 +236,7 @@
           pos[1] = 2;
         }
       }));
-      var current_walker = markov.makeNode("Right To Left", createWalker({ms: 650, step_fn: function (pos) {
+      var current_walker = markov.makeNode("Right To Left", createWalker({ms: 1000, step_fn: function (pos) {
         pos[0] -= 1;
         constrainToCube(pos);
       }, reset_condition: function (pos) {
@@ -247,6 +246,20 @@
         pos[0] = 2;
       }
       }));
+
+      var random_walk = markov.makeNode("Random Walk", createWalker({ms: 1000,
+        step_fn: function (pos) {
+          function random_offset() {
+            return Math.floor(Math.random() * 3) - 1;
+          }
+          pos.forEach(function (value, index){
+            pos[index] += random_offset();
+          });
+          constrainToCube(pos);
+        }
+      }));
+
+      current_walker = random_walk;
 
       setup();
 
@@ -272,7 +285,7 @@
       }
 
       var time = 0,
-          seconds_per_mode = 6.0;
+          seconds_per_mode = 10.0;
 
       function loop() {
 

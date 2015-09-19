@@ -24,12 +24,6 @@
     <script src="./third-party/three.js"></script>
     <script src="./src/markov.js"></script>
     <script>
-      /// Returns cube vertex data at index.
-      function cubeVertex(index) {
-        return { position: tbc_geometry.vertices[index],
-                 color: tbc_geometry.colors[index] };
-      };
-
       /// Convert a grid position into a cube index.
       function cubeIndex(x, y, z) {
         if (Array.isArray(x)) {
@@ -72,9 +66,10 @@
       }
 
       /// Activate a position with a decay
-      function activate(p, color) {
+      function activate(sphere, color) {
       	var color = color || active_color;
-        p.color.set(color);
+        sphere.material.color.set(color);
+        sphere.scale.set(1, 1, 1);
       }
 
       var width, height;
@@ -87,21 +82,29 @@
       camera.position.y = 2.5;
       camera.lookAt(new THREE.Vector3());
       renderer.setClearColor(new THREE.Color(0xcccccc));
-
-      var tbc_geometry = new THREE.Geometry();
       var inactive_color = new THREE.Color(0xffffff),
           active_color = new THREE.Color(0xFF00FF),
-          alt_color = new THREE.Color(0x0099ff),
-          color_fade_rate = 0.03;
+          alt_color = new THREE.Color(0x0099ff);
 
-      for (var y = 1; y >= -1; y -=1) {
-        for (var x = -1; x <= 1; x +=1) {
-          for (var z = -1; z <= 1; z += 1) {
-            tbc_geometry.vertices.push(new THREE.Vector3(x * 0.5, y * 0.5, z * 0.5));
-            tbc_geometry.colors.push(active_color.clone());
+      function build_spheres() {
+        var spheres = [],
+            sphere = new THREE.SphereGeometry(1, 128, 128);
+
+        for (var y = 1; y >= -1; y -=1) {
+          for (var x = -1; x <= 1; x +=1) {
+            for (var z = -1; z <= 1; z += 1) {
+              var material = new THREE.MeshBasicMaterial({color:0xFF0000});
+              var mesh = new THREE.Mesh(sphere, material);
+              spheres.push(mesh);
+              scene.add(mesh);
+              mesh.position.set(x * 5, y * 5, z * 5);
+            }
           }
         }
+        return spheres;
       }
+
+      var spheres = build_spheres();
 
       function build_static_cube() {
         var geom = new THREE.Geometry();
@@ -119,7 +122,7 @@
           }
         }
         geom.vertices = indices_array.map(function (value) {
-          return tbc_geometry.vertices[value].clone().multiplyScalar(10.0);
+          return spheres[value].position.clone();
         });
         geom.computeLineDistances();
         var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0x332121, dashSize: 0.1, gapSize: 0.1, linewidth: 2.0 } ) );
@@ -188,16 +191,6 @@
       build_corners();
       build_ground();
 
-      var tbc_material = new THREE.PointsMaterial({
-        size: 4,
-        vertexColors: THREE.VertexColors,
-        map: THREE.ImageUtils.loadTexture("img/ring.png"),
-        transparent: true
-      });
-      var tbc_mesh = new THREE.Points(tbc_geometry, tbc_material);
-      tbc_mesh.scale.set(10, 10, 10);
-      scene.add(tbc_mesh);
-
       function never() { return false; }
       function nothing() {}
 
@@ -225,7 +218,7 @@
           time += dt;
 
           if (time > ms_per_step) {
-            activate(cubeVertex(cubeIndex(position)), color);
+            activate(spheres[cubeIndex(position)], color);
             if (reset_condition(position)) {
               reset_fn(position);
             }
@@ -306,17 +299,20 @@
       }
 
       var time = 0,
-          seconds_per_mode = 10.0;
+          seconds_per_mode = 10.0,
+          color_fade_rate = 0.03;
 
       function loop() {
 
         requestAnimationFrame(loop);
         renderer.render(scene, camera);
 
-        tbc_geometry.colors.forEach(function (color) {
-          color.lerp(inactive_color, color_fade_rate);
+        spheres.forEach(function(sphere) {
+          sphere.material.color.lerp(inactive_color, color_fade_rate);
+          sphere.scale.x += (0.1 - sphere.scale.x) * 0.1;
+          sphere.scale.y += (0.1 - sphere.scale.y) * 0.1;
+          sphere.scale.z += (0.1 - sphere.scale.z) * 0.1;
         });
-        tbc_geometry.colorsNeedUpdate = true;
 
         time += 1 / 60.0;
         if (time > seconds_per_mode) {
@@ -329,7 +325,7 @@
           document.getElementById("title").textContent = current_walker.markov.name + ":" + other_walker.markov.name;
         }
         current_walker.update(active_color);
-	other_walker.update(alt_color);
+        other_walker.update(alt_color);
       }
 
     </script>

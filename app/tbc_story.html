@@ -1,0 +1,264 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      * { margin: 0; padding: 0; }
+      canvas {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      #instruction_list {
+        color: #FFF;
+        z-index: 1;
+        position: fixed;
+        top: 50%;
+        left: 15%;
+
+        letter-spacing: 1px;
+        font-size: 21px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="instruction_list"></div>
+    <script src="./third-party/three.js"></script>
+    <script src="./src/markov.js"></script>
+    <script>
+      /// Convert a grid position into a cube index.
+      function cubeIndex(x, y, z) {
+        if (Array.isArray(x)) {
+          y = x[1];
+          z = x[2];
+          x = x[0];
+        }
+        var level = Math.min(y, 2) * 9;
+        var left = Math.min(x, 2) * 3;
+        var depth = Math.min(z, 2);
+        return level + left + depth;
+      }
+
+      /// Returns a random position in a cube.
+      function randomPosition(size) {
+        var size = size || 3;
+        return [Math.floor(Math.random() * size),
+                Math.floor(Math.random() * size),
+                Math.floor(Math.random() * size)
+        ];
+      }
+
+      function randomIndex(size) {
+        var size = size || 3;
+        return Math.floor(Math.random() * size);
+      }
+
+      function randomizePosition(position, size) {
+        var size = size || 3;
+        position.forEach(function (value, index) {
+          position[index] = Math.floor(Math.random() * size);
+        })
+      }
+
+      function constrainToCube(arr, dims) {
+        var dims = (dims - 1) || 2;
+        arr.forEach(function (value, index) {
+          arr[index] = Math.max(Math.min(value, dims), 0);
+        });
+      }
+
+      /// Activate a position with a decay
+      function activate(sphere, color) {
+        var s = 1.6;
+        sphere.scale.set(s, s, s);
+      }
+
+      var width, height;
+
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(60);
+      scene.fog = new THREE.Fog( 0xcccccc, 5, 40 );
+      camera.position.z = 20;
+      camera.position.y = 2.5;
+      camera.lookAt(new THREE.Vector3());
+      renderer.setClearColor(new THREE.Color(0xcccccc));
+
+      function build_spheres() {
+        var spheres = [],
+            sphere = new THREE.SphereGeometry(1, 128, 128);
+
+        for (var y = 1; y >= -1; y -=1) {
+          for (var x = -1; x <= 1; x +=1) {
+            for (var z = -1; z <= 1; z += 1) {
+              var material = new THREE.MeshBasicMaterial({color:0x000000});
+              var mesh = new THREE.Mesh(sphere, material);
+              spheres.push(mesh);
+              scene.add(mesh);
+              mesh.position.set(x * 5, y * 5, z * 5);
+            }
+          }
+        }
+        return spheres;
+      }
+
+      var spheres = build_spheres();
+
+      function build_static_cube() {
+        var geom = new THREE.Geometry();
+        var indices_array = [];
+        for (var z = 0; z <= 2; z += 1) {
+          for (var y = 0; y <= 2; y += 1) {
+            indices_array.push(cubeIndex(0, y, z));
+            indices_array.push(cubeIndex(2, y, z));
+
+            indices_array.push(cubeIndex(y, 0, z));
+            indices_array.push(cubeIndex(y, 2, z));
+
+            indices_array.push(cubeIndex(y, z, 0));
+            indices_array.push(cubeIndex(y, z, 2));
+          }
+        }
+        geom.vertices = indices_array.map(function (value) {
+          return spheres[value].position.clone();
+        });
+        geom.computeLineDistances();
+        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0x332121, dashSize: 0.1, gapSize: 0.1, linewidth: 2.0 } ) );
+        scene.add(object);
+      }
+
+      function build_corners() {
+        var geom = new THREE.CylinderGeometry(0.1, 0.1, 1);
+        var material = new THREE.MeshBasicMaterial( { color: 0x110000, side: THREE.DoubleSide } );
+        var mesh_a = new THREE.Mesh(geom, material);
+        var mesh_b = new THREE.Mesh(geom, material);
+        var mesh_c = new THREE.Mesh(geom, material);
+
+        mesh_a.position.y = 0.5;
+        mesh_b.rotation.z = Math.PI / 2;
+        mesh_b.position.x = 0.5;
+        mesh_c.rotation.x = Math.PI / 2;
+        mesh_c.position.z = -0.5;
+
+        var left = new THREE.Object3D();
+        left.add(mesh_a);
+        left.add(mesh_b);
+        left.add(mesh_c);
+        left.position.set(-5, -5, 5);
+
+        var right = left.clone();
+        right.position.set(5, -5, 5);
+        right.scale.x = -1;
+
+        var fb = new THREE.Object3D();
+        fb.add(left);
+        fb.add(right);
+
+        var bb = fb.clone();
+        bb.scale.z = -1;
+
+        var bottom = new THREE.Object3D();
+        bottom.add(bb);
+        bottom.add(fb);
+
+        var top = bottom.clone();
+        top.scale.y = -1;
+
+        var everything = new THREE.Object3D();
+        everything.add(top);
+        everything.add(bottom);
+
+        scene.add(everything);
+      }
+
+      function build_ground() {
+        var geom = new THREE.PlaneGeometry(80, 40, 1, 1);
+        var object = new THREE.Mesh(geom, new THREE.MeshBasicMaterial());
+        object.position.y = -6.0;
+        object.rotation.x = -Math.PI / 2;
+        scene.add(object);
+
+        // shadow
+        var shadow = new THREE.CylinderGeometry(9, 9, 0, 64);
+        object = new THREE.Mesh(shadow, new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.1}));
+        object.position.y = -5.9;
+        scene.add(object);
+      }
+
+      build_static_cube();
+      build_corners();
+      build_ground();
+
+      function setup() {
+
+        document.body.appendChild(renderer.domElement);
+        window.addEventListener('resize', resize, false);
+        resize();
+
+        loop();
+
+      }
+
+      function resize() {
+
+        width = window.innerWidth;
+        height = window.innerHeight;
+
+        renderer.setSize(width, height);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+
+      }
+
+      function mix(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      var time = 0,
+          seconds_per_letter = 1.0,
+          scale_fade_rate = 0.03;
+
+      function loop() {
+
+        requestAnimationFrame(loop);
+        renderer.render(scene, camera);
+
+        spheres.forEach(function(sphere) {
+          sphere.scale.x += (0.2 - sphere.scale.x) * scale_fade_rate;
+          sphere.scale.y += (0.2 - sphere.scale.y) * scale_fade_rate;
+          sphere.scale.z += (0.2 - sphere.scale.z) * scale_fade_rate;
+        });
+
+        time += 1 / 60.0;
+        if (time > seconds_per_letter) {
+          time = 0;
+        }
+      }
+
+      function createWordMapping() {
+        var letter_map = (function () {
+          var alphabet = "abcdefghijklmnopqrstuvwxyz ";
+          var dict = {};
+          Array.prototype.forEach.call(alphabet, function (value, index) {
+            dict[value] = index;
+          });
+          return dict;
+        }());
+
+        function test(letter) {
+          console.log(letter, letter_map[letter]);
+        }
+
+        test("a");
+        test("m");
+        test(" ");
+      }
+      createWordMapping();
+
+      // Start it all!
+      setup();
+    </script>
+  </body>
+</html>

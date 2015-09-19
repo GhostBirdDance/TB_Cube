@@ -122,12 +122,33 @@
           return tbc_geometry.vertices[value].clone().multiplyScalar(10.0);
         });
         geom.computeLineDistances();
-        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0x332121, dashSize: 0.1, gapSize: 0.1, linewidth: 1.5 } ) );
+        var object = new THREE.LineSegments( geom, new THREE.LineDashedMaterial( { color: 0x332121, dashSize: 0.1, gapSize: 0.1, linewidth: 2.0 } ) );
         scene.add(object);
       }
 
-      function build_ground()
-      {
+      function build_corners() {
+        var geom = new THREE.CylinderGeometry(0.1, 0.1, 1);
+        var material = new THREE.MeshBasicMaterial( { color: 0x110000, side: THREE.DoubleSide } );
+        var mesh_a = new THREE.Mesh(geom, material);
+        var mesh_b = new THREE.Mesh(geom, material);
+        var mesh_c = new THREE.Mesh(geom, material);
+
+        mesh_a.position.y = 0.5;
+        mesh_b.rotation.z = Math.PI / 2;
+        mesh_b.position.x = 0.5;
+        mesh_c.rotation.x = Math.PI / 2;
+        mesh_c.position.z = -0.5;
+
+        var group = new THREE.Object3D();
+        group.add(mesh_a);
+        group.add(mesh_b);
+        group.add(mesh_c);
+        group.position.set(-5, -5, 5);
+
+        scene.add(group);
+      }
+
+      function build_ground() {
         var geom = new THREE.PlaneGeometry(80, 40, 1, 1);
         var object = new THREE.Mesh(geom, new THREE.MeshBasicMaterial());
         object.position.y = -6.0;
@@ -136,6 +157,7 @@
       }
 
       build_static_cube();
+      build_corners();
       build_ground();
 
       var tbc_material = new THREE.PointsMaterial({

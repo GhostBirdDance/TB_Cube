@@ -196,7 +196,7 @@
             position = [0, 0, 0],
             updateTime = Date.now(),
             time = 0,
-            ms_per_step = opt.ms || 500,
+            ms_per_step = opt.ms || 1000,
             step_fn = opt.step_fn || randomIndex,
             reset_condition = opt.reset_condition || never,
             reset_fn = opt.reset_fn || nothing;
@@ -259,6 +259,20 @@
         }
         }));
 
+        var left_to_right = markov.makeNode("Slide Right", createWalker({
+          step_fn: function (pos) {
+            pos[0] += 1;
+            constrainToCube(pos);
+          },
+          reset_condition: function (pos) {
+            return pos[0] >= 2;
+          },
+          reset_fn: function (pos) {
+            randomizePosition(pos);
+            pos[0] = 0;
+          }
+        }));
+
         var random_walk = markov.makeNode("Meander", createWalker({ms: 1000,
           step_fn: function (pos) {
             function random_offset() {
@@ -271,12 +285,17 @@
           }
         }));
 
-        random_walk.addExit(random_walk, 1.5);
+        random_walk.addExit(random_walk, 2);
         random_walk.addExit(right_to_left, 1);
+        random_walk.addExit(left_to_right, 1);
 
         right_to_left.addExit(random_walk, 1);
         right_to_left.addExit(diagonal, 2);
         right_to_left.addExit(right_to_left, 2);
+        right_to_left.addExit(left_to_right, 2);
+
+        left_to_right.addExit(left_to_right, 1);
+        left_to_right.addExit(right_to_left, 1);
 
         diagonal.addExit(diagonal, 1);
         diagonal.addExit(right_to_left, 1);

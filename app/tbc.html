@@ -232,7 +232,7 @@
       }
 
       function createWalkers() {
-        var diagonal = markov.makeNode("Diagonal", createWalker({ms: 1000,
+        var diagonal = markov.makeNode("Ascend Left", createWalker({ms: 1000,
           step_fn: function (pos) {
             pos[0] -= 1;
             pos[1] -= 1;
@@ -247,7 +247,7 @@
             pos[1] = 2;
           }
         }));
-        var right_to_left = markov.makeNode("Right To Left", createWalker({ms: 1000, step_fn: function (pos) {
+        var right_to_left = markov.makeNode("Slide Left", createWalker({ms: 1000, step_fn: function (pos) {
           pos[0] -= 1;
           constrainToCube(pos);
         }, reset_condition: function (pos) {
@@ -258,7 +258,7 @@
         }
         }));
 
-        var random_walk = markov.makeNode("Random Walk", createWalker({ms: 1000,
+        var random_walk = markov.makeNode("Meander", createWalker({ms: 1000,
           step_fn: function (pos) {
             function random_offset() {
               return Math.floor(Math.random() * 3) - 1;

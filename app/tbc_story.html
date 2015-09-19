@@ -216,6 +216,39 @@
         return a + (b - a) * t;
       }
 
+      function createWordMapping(story) {
+        var self = {},
+            story = story || "Default Story",
+            index = 0;
+        story = story.toLowerCase();
+        var letter_map = (function () {
+          var alphabet = "abcdefghijklmnopqrstuvwxyz ";
+          var dict = {};
+          Array.prototype.forEach.call(alphabet, function (value, index) {
+            dict[value] = index;
+          });
+          return dict;
+        }());
+
+        function test(letter) {
+          console.log(letter, letter_map[letter]);
+        }
+
+        function next() {
+          var letter = story[index];
+          activate(spheres[letter_map[letter]]);
+          console.log(letter);
+
+          index = (index + 1) % story.length;
+        }
+
+        self.next = next;
+        self.test = test;
+        return self;
+      }
+
+      var narrative = createWordMapping("Hello everything is okay right now");
+
       var time = 0,
           seconds_per_letter = 1.0,
           scale_fade_rate = 0.03;
@@ -234,28 +267,9 @@
         time += 1 / 60.0;
         if (time > seconds_per_letter) {
           time = 0;
+          narrative.next();
         }
       }
-
-      function createWordMapping() {
-        var letter_map = (function () {
-          var alphabet = "abcdefghijklmnopqrstuvwxyz ";
-          var dict = {};
-          Array.prototype.forEach.call(alphabet, function (value, index) {
-            dict[value] = index;
-          });
-          return dict;
-        }());
-
-        function test(letter) {
-          console.log(letter, letter_map[letter]);
-        }
-
-        test("a");
-        test("m");
-        test(" ");
-      }
-      createWordMapping();
 
       // Start it all!
       setup();

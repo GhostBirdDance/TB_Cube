@@ -10,17 +10,21 @@
         left: 0;
       }
 
-      #title {
+      #instruction_list {
         color: #FFF;
         z-index: 1;
         position: fixed;
-        top: 10px;
-        left: 10px;
+        top: 50%;
+        left: 15%;
+
+        letter-spacing: 1px;
+        font-size: 21px;
+        font-weight: bold;
       }
     </style>
   </head>
   <body>
-    <h3 id="title"></h3>
+    <div id="instruction_list"></div>
     <script src="./third-party/three.js"></script>
     <script src="./src/markov.js"></script>
     <script>
@@ -357,15 +361,32 @@
 
       }
 
+      function mix(a, b, t) {
+        return a + (b - a) * t;
+      }
+
       function makeTextUpdater() {
         var self = {},
-            lines = [];
+            lines = [],
+            parent = document.getElementById("instruction_list"),
+            max_items = 5;
 
         function update(text) {
-          console.log("Change:", current_walker.markov.name);
-          lines.unshift(text);
-          document.getElementById("title").innerHTML = lines.join("<br>");
-          lines = lines.slice(0, 10);
+          var element = document.createElement("p");
+          element.innerText = text;
+          lines.unshift(element);
+          parent.insertBefore(element, parent.firstChild);
+
+          while (lines.length > max_items) {
+            parent.removeChild(lines[lines.length - 1]);
+            lines.pop();
+          }
+
+          lines.forEach(function (line, index) {
+            var t = Math.floor(255 * mix(0.33, 1.0, index / max_items)),
+                rgb = [t, t, t];
+            line.style.color = "rgb(" + rgb.join(",") + ")";
+          });
         }
 
         self.update = update;
